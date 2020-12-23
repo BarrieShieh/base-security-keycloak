@@ -2,87 +2,87 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  <modelVersion>4.0.0</modelVersion>
 
+  <groupId>com.bosch.inst</groupId>
+  <artifactId>base-security-keycloak</artifactId>
+  <version>0.0.2-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>base :: security keycloak</name>
+  <description>Keycloak integration extension</description>
+
+  <parent>
     <groupId>com.bosch.inst</groupId>
-    <artifactId>base-security-keycloak</artifactId>
-    <version>0.0.1</version>
-    <packaging>jar</packaging>
+    <artifactId>base</artifactId>
+    <version>0.4.38-SNAPSHOT</version>
+  </parent>
 
-    <name>base :: security keycloak</name>
-    <description>Keycloak integration extension</description>
+  <properties>
+    <base.version>0.4.38-SNAPSHOT</base.version>
+    <keycloak.version>12.0.1</keycloak.version>
 
-    <parent>
-        <groupId>com.bosch.inst</groupId>
-        <artifactId>base</artifactId>
-        <version>0.4.38-SNAPSHOT</version>
-    </parent>
+    <!-- SonarQube properties -->
+    <sonar.projectName>com.bosch.iox.zeno.${project.artifactId}</sonar.projectName>
+    <sonar.projectKey>com.bosch.iox.zeno.${project.artifactId}</sonar.projectKey>
+    <sonar.sources>${project.basedir}/src/main/</sonar.sources>
+    <sonar.exclusions>**/target/**</sonar.exclusions>
+    <sonar.tests>${project.basedir}/src/test/</sonar.tests>
+  </properties>
 
-    <properties>
-        <base.version>0.4.38-SNAPSHOT</base.version>
-        <keycloak.version>12.0.1</keycloak.version>
+  <dependencies>
+    <dependency>
+      <groupId>com.bosch.inst.base</groupId>
+      <artifactId>starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-spring-boot-starter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-authz-client</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-admin-client</artifactId>
+    </dependency>
+    <!--        <dependency>-->
+    <!--            <groupId>org.keycloak.bom</groupId>-->
+    <!--            <artifactId>keycloak-adapter-bom</artifactId>-->
+    <!--            <type>pom</type>-->
+    <!--        </dependency>-->
+  </dependencies>
 
-        <!-- SonarQube properties -->
-        <sonar.projectName>com.bosch.iox.zeno.${project.artifactId}</sonar.projectName>
-        <sonar.projectKey>com.bosch.iox.zeno.${project.artifactId}</sonar.projectKey>
-        <sonar.sources>${project.basedir}/src/main/</sonar.sources>
-        <sonar.exclusions>**/target/**</sonar.exclusions>
-        <sonar.tests>${project.basedir}/src/test/</sonar.tests>
-    </properties>
-
+  <dependencyManagement>
     <dependencies>
-        <dependency>
-            <groupId>com.bosch.inst.base</groupId>
-            <artifactId>starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-authz-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.keycloak</groupId>
-            <artifactId>keycloak-admin-client</artifactId>
-        </dependency>
-        <!--        <dependency>-->
-        <!--            <groupId>org.keycloak.bom</groupId>-->
-        <!--            <artifactId>keycloak-adapter-bom</artifactId>-->
-        <!--            <type>pom</type>-->
-        <!--        </dependency>-->
+      <dependency>
+        <groupId>com.bosch.inst.base</groupId>
+        <artifactId>starter</artifactId>
+        <version>${base.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-spring-boot-starter</artifactId>
+        <version>${keycloak.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-authz-client</artifactId>
+        <version>${keycloak.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.keycloak</groupId>
+        <artifactId>keycloak-admin-client</artifactId>
+        <version>${keycloak.version}</version>
+      </dependency>
+      <!-- https://mvnrepository.com/artifact/org.keycloak.bom/keycloak-adapter-bom -->
+      <!--            <dependency>-->
+      <!--                <groupId>org.keycloak.bom</groupId>-->
+      <!--                <artifactId>keycloak-adapter-bom</artifactId>-->
+      <!--                <version>${keycloak.version}</version>-->
+      <!--                <type>pom</type>-->
+      <!--            </dependency>-->
     </dependencies>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.bosch.inst.base</groupId>
-                <artifactId>starter</artifactId>
-                <version>${base.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.keycloak</groupId>
-                <artifactId>keycloak-spring-boot-starter</artifactId>
-                <version>${keycloak.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.keycloak</groupId>
-                <artifactId>keycloak-authz-client</artifactId>
-                <version>${keycloak.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.keycloak</groupId>
-                <artifactId>keycloak-admin-client</artifactId>
-                <version>${keycloak.version}</version>
-            </dependency>
-            <!-- https://mvnrepository.com/artifact/org.keycloak.bom/keycloak-adapter-bom -->
-            <!--            <dependency>-->
-            <!--                <groupId>org.keycloak.bom</groupId>-->
-            <!--                <artifactId>keycloak-adapter-bom</artifactId>-->
-            <!--                <version>${keycloak.version}</version>-->
-            <!--                <type>pom</type>-->
-            <!--            </dependency>-->
-        </dependencies>
-    </dependencyManagement>
+  </dependencyManagement>
 </project>
