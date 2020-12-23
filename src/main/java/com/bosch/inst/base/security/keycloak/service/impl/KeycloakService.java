@@ -160,6 +160,13 @@ public class KeycloakService implements IKeycloakService {
   }
 
   @Override
+  public List<GroupRepresentation> getGroupsByUserId(String realm, String userId) {
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmResource realmResource = keycloakInstance.realm(realm);
+    return realmResource.users().get(userId).groups();
+  }
+
+  @Override
   public List<GroupRepresentation> getGroups(String realm) {
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
@@ -172,6 +179,13 @@ public class KeycloakService implements IKeycloakService {
     RealmResource realmResource = keycloakInstance.realm(realm);
 
     return realmResource.groups().group(groupId).members();
+  }
+
+  @Override
+  public List<RoleRepresentation> getRolesByUserId(String realm, String userId) {
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmResource realmResource = keycloakInstance.realm(realm);
+    return realmResource.users().get(userId).roles().realmLevel().listAll();
   }
 
   @Override

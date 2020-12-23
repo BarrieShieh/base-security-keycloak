@@ -31,9 +31,13 @@ public interface IKeycloakService {
 
   GroupRepresentation getGroupById(String realm, String groupId);
 
+  List<GroupRepresentation> getGroupsByUserId(String realm, String userId);
+
   List<GroupRepresentation> getGroups(String realm);
 
   List<UserRepresentation> getGroupMembers(String realm, String groupId);
+
+  List<RoleRepresentation> getRolesByUserId(String realm, String userId);
 
   RoleRepresentation getRoleByName(String realm, String roleName);
 
