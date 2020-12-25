@@ -7,8 +7,10 @@ import com.bosch.inst.base.security.keycloak.filter.CustomLogoutHandler;
 import com.bosch.inst.base.security.keycloak.filter.EnforceSecureLoginFilter;
 import com.bosch.inst.base.security.keycloak.filter.RefreshLoginCookieFilter;
 import com.bosch.inst.base.security.keycloak.filter.XRequestedHeaderFilter;
+import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
 import org.keycloak.adapters.KeycloakConfigResolver;
-import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
+import org.keycloak.adapters.KeycloakDeployment;
+import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +40,8 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 })
 @Import({
     RefreshLoginCookieFilter.class,
-    AuthorizationCookieHandler.class
+    AuthorizationCookieHandler.class,
+    KeycloakService.class
 })
 public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter {
 
@@ -48,6 +51,8 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
 
+  @Autowired
+  private KeycloakService keycloakService;
 
   @Override
   public void configure(WebSecurity web) throws Exception {
@@ -115,8 +120,31 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
     return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
   }
 
+//  @Bean
+//  public KeycloakConfigResolver KeycloakConfigResolver() {
+//    return new KeycloakSpringBootConfigResolver();
+//  }
+
+  /**
+   * Overrides default keycloak config resolver behaviour (/WEB-INF/keycloak.json) by a simple
+   * mechanism.
+   * <p>
+   * This example loads other-keycloak.json when the parameter use.other is set to true, e.g.:
+   * {@code ./gradlew bootRun -Duse.other=true}
+   *
+   * @return keycloak config resolver
+   */
   @Bean
-  public KeycloakConfigResolver KeycloakConfigResolver() {
-    return new KeycloakSpringBootConfigResolver();
+  public KeycloakConfigResolver keycloakConfigResolver() {
+    return new KeycloakConfigResolver() {
+      @Override
+      public KeycloakDeployment resolve(HttpFacade.Request facade) {
+        String tenant = facade.getCookie(KeycloakService.cookieTenantKey).getValue();
+        return keycloakService.getRealmInfo(tenant);
+      }
+    };
+
   }
+
+
 }

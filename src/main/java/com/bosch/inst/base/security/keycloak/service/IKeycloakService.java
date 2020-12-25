@@ -1,6 +1,7 @@
 package com.bosch.inst.base.security.keycloak.service;
 
 import java.util.List;
+import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -8,38 +9,44 @@ import org.keycloak.representations.idm.UserRepresentation;
 
 public interface IKeycloakService {
 
+
   Keycloak getKeycloakInstance();
 
-  UserRepresentation selfRegistration(String realm, String userName, String firstName,
-      String lastName,
-      String email,
-      String password, List<String> roles, List<String> groupIds);
+  UserRepresentation getLoginUser();
 
-  void sendVerifyEmail(String realm, String userId);
+  UserRepresentation selfRegistration(UserRepresentation user);
 
-  void resetPasswordEmail(String realm, String userId);
+  void sendVerifyEmail(String userId);
 
-  void setRoles(String realm, String userId, List<RoleRepresentation> roles);
+  void resetPasswordEmail(String username);
 
-  void setGroups(String realm, String userId, List<String> groupIds);
+  void setRoles(String userId, List<RoleRepresentation> roles);
 
-  UserRepresentation getUserById(String realm, String userId);
+  void setGroups(String userId, List<String> groupIds);
 
-  List<UserRepresentation> getUserByUsername(String realm, String username);
+  UserRepresentation getUserById(String userId);
 
-  List<UserRepresentation> getUsers(String realm);
+  List<UserRepresentation> getUserByUsername(String username);
 
-  GroupRepresentation getGroupById(String realm, String groupId);
+  List<UserRepresentation> getUsers();
 
-  List<GroupRepresentation> getGroupsByUserId(String realm, String userId);
+  GroupRepresentation getGroupById(String groupId);
 
-  List<GroupRepresentation> getGroups(String realm);
+  List<GroupRepresentation> getGroupsByUserId(String userId);
 
-  List<UserRepresentation> getGroupMembers(String realm, String groupId);
+  List<GroupRepresentation> getGroups();
 
-  List<RoleRepresentation> getRolesByUserId(String realm, String userId);
+  List<UserRepresentation> getGroupUserMembers(String groupId);
 
-  RoleRepresentation getRoleByName(String realm, String roleName);
+  List<RoleRepresentation> getRolesByUserId(String userId);
 
-  List<RoleRepresentation> getRoles(String realm);
+  RoleRepresentation getRoleByName(String roleName);
+
+  List<RoleRepresentation> getRoles();
+
+  List<UserRepresentation> getRoleUserMembers(String roleName);
+
+  List<GroupRepresentation> getRoleGroupMembers(String roleName);
+
+  KeycloakDeployment getRealmInfo(String tenant);
 }

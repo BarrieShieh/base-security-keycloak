@@ -18,4 +18,6 @@ public class HttpCookie {
   private String path = "/";
 
   private int maxAge = 3600;
+
+
 }

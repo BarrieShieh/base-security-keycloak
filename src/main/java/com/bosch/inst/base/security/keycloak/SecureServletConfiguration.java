@@ -7,8 +7,7 @@ import org.springframework.context.annotation.Import;
 
 @Import({
     SecurityConfiguration.class,
-    KeycloakService.class,
-    TestController.class
+    KeycloakService.class
 })
 @Configuration
 public class SecureServletConfiguration {
