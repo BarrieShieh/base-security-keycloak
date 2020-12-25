@@ -1,5 +1,7 @@
 package com.bosch.inst.base.security.keycloak.servlet;
 
+import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_COOKIE_NAME;
+
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
 import com.bosch.inst.base.security.keycloak.filter.CorsFilter;
@@ -64,14 +66,10 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
   @Override
   protected void configure(HttpSecurity http) throws Exception {
     super.configure(http);
-//    http.authorizeRequests()
-//        .anyRequest()
-//        .permitAll();
-//    http.csrf().disable();
 
     http.authorizeRequests()
-        .antMatchers("/actuator/**").hasAnyAuthority("ACTUATOR")
-        .antMatchers("/actuator/**").hasAnyAuthority("ROLE_ACTUATOR")
+//        .antMatchers("/actuator/**").hasAnyAuthority("ACTUATOR")
+//        .antMatchers("/actuator/**").hasAnyAuthority("ROLE_ACTUATOR")
         .anyRequest().permitAll();
 
     // Don't use sessions for stateless REST interfaces
@@ -91,8 +89,8 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
 
     http.logout()
         .addLogoutHandler(new CustomLogoutHandler(authorizationCookieHandler))
-//                .deleteCookies(properties.getCookie().getName())
-//                .deleteCookies(TENANT_COOKIE_NAME)
+        .deleteCookies(httpProperties.getCookie().getName())
+        .deleteCookies(TENANT_COOKIE_NAME)
         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK));
 
     // Return the 'WWW-Authenticate: Basic' header in case of missing credentials
@@ -139,7 +137,7 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
     return new KeycloakConfigResolver() {
       @Override
       public KeycloakDeployment resolve(HttpFacade.Request facade) {
-        String tenant = facade.getCookie(KeycloakService.cookieTenantKey).getValue();
+        String tenant = facade.getCookie(TENANT_COOKIE_NAME).getValue();
         return keycloakService.getRealmInfo(tenant);
       }
     };

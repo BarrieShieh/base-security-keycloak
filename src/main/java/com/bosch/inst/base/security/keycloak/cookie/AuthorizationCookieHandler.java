@@ -1,6 +1,8 @@
 package com.bosch.inst.base.security.keycloak.cookie;
 
 
+import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_COOKIE_NAME;
+
 import com.bosch.inst.base.security.keycloak.auth.CredentialsProperties;
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
 import java.util.Arrays;
@@ -42,8 +44,6 @@ public class AuthorizationCookieHandler {
 
   @Autowired
   private CredentialsProperties credentialsProperties;
-
-  public static final String TENANT_COOKIE_NAME = "TENANT-ID";
 
   /**
    * Enriches the response with the authentication cookie that contains the JWT contained in the

@@ -30,14 +30,14 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class KeycloakService implements IKeycloakService {
 
-  public static String cookieTenantKey = "TENANT";
+  public static String TENANT_COOKIE_NAME = "TENANT";
 
   @Autowired
   private HttpServletRequest request;
 
   @Override
   public Keycloak getKeycloakInstance() {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     KeycloakDeployment deployment = getRealmInfo(realm);
     String authServerUrl = deployment.getAuthServerBaseUrl();
 
@@ -55,7 +55,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public UserRepresentation getLoginUser() {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) request.getUserPrincipal();
     KeycloakPrincipal principal = (KeycloakPrincipal) token.getPrincipal();
     return getUserById(principal.getName());
@@ -63,7 +63,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public UserRepresentation selfRegistration(UserRepresentation user) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
 
     Keycloak keycloakInstance = getKeycloakInstance();
     user.setEnabled(true);
@@ -92,7 +92,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void sendVerifyEmail(String userId) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
@@ -102,7 +102,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void resetPasswordEmail(String username) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     List<UserRepresentation> users = realmResource.users().search(username);
@@ -114,7 +114,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void setRoles(String userId, List<RoleRepresentation> roles) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
@@ -124,7 +124,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void setGroups(String userId, List<String> groupIds) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
@@ -136,7 +136,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public UserRepresentation getUserById(String userId) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).toRepresentation();
@@ -144,7 +144,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getUserByUsername(String username) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().search(username);
@@ -152,7 +152,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getUsers() {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().list();
@@ -160,7 +160,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public GroupRepresentation getGroupById(String groupId) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.groups().group(groupId).toRepresentation();
@@ -168,7 +168,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<GroupRepresentation> getGroupsByUserId(String userId) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).groups();
@@ -176,7 +176,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<GroupRepresentation> getGroups() {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.groups().groups();
@@ -184,7 +184,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getGroupUserMembers(String groupId) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
@@ -193,7 +193,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<RoleRepresentation> getRolesByUserId(String userId) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).roles().realmLevel().listAll();
@@ -201,7 +201,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public RoleRepresentation getRoleByName(String roleName) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.roles().get(roleName).toRepresentation();
@@ -209,7 +209,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<RoleRepresentation> getRoles() {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.roles().list();
@@ -217,7 +217,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getRoleUserMembers(String roleName) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
@@ -226,7 +226,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<GroupRepresentation> getRoleGroupMembers(String roleName) {
-    String realm = readCookie(cookieTenantKey).get();
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
