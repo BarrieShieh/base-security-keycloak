@@ -1,7 +1,6 @@
 package com.bosch.inst.base.security.keycloak.filter;
 
 import static org.springframework.http.HttpStatus.valueOf;
-import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
@@ -30,41 +29,45 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class RefreshLoginCookieFilter extends OncePerRequestFilter {
 
   @Autowired
+  private HttpServletRequest request;
+
+  @Autowired
+  private HttpServletResponse response;
+
+  @Autowired
   private HttpProperties httpProperties;
 
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
 
-  private void refreshAuthorizationCookie(HttpServletRequest httpServletRequest,
-      HttpServletResponse httpServletResponse) {
-    Cookie loginCookie = authorizationCookieHandler.getAuthorizationCookie(httpServletRequest);
+  private void refreshAuthorizationCookie() {
+    Cookie loginCookie = authorizationCookieHandler.getAuthorizationCookie(request);
     if (loginCookie != null) {
       log.debug(
           "Processed request with response HTTP status {} - will add fresh authorization cookie",
-          httpServletResponse.getStatus());
-      authorizationCookieHandler.setAuthenticationCookie(httpServletRequest, httpServletResponse,
-          getContext().getAuthentication());
+          response.getStatus());
+//      authorizationCookieHandler.setAuthenticationCookie();
     } else {
       log.debug(
           "Processed request with response HTTP status {} - will NOT add fresh authorization cookie "
               + "since the request was made with basic auth, not with a login cookie",
-          httpServletResponse.getStatus());
+          response.getStatus());
     }
   }
 
-  private void refreshTenantCookie(HttpServletRequest httpServletRequest,
-      HttpServletResponse httpServletResponse) {
-    Cookie loginCookie = authorizationCookieHandler.getTenantCookie(httpServletRequest);
+  private void refreshTenantCookie(HttpServletRequest request,
+      HttpServletResponse response) {
+    Cookie loginCookie = authorizationCookieHandler.getTenantCookie(request);
     if (loginCookie != null) {
       // TODO: Fix debug messages
       log.debug("Processed request with response HTTP status {} - will add fresh tenant cookie",
-          httpServletResponse.getStatus());
+          response.getStatus());
       authorizationCookieHandler
-          .setTenantCookie(httpServletRequest, httpServletResponse, loginCookie.getValue());
+          .setTenantCookie(loginCookie.getValue());
     } else {
       log.debug("Processed request with response HTTP status {} - will NOT add fresh tenant cookie "
               + "since the request was made with basic auth, not with a login cookie",
-          httpServletResponse.getStatus());
+          response.getStatus());
     }
   }
 
@@ -77,7 +80,7 @@ public class RefreshLoginCookieFilter extends OncePerRequestFilter {
         // Check whether the request contains the login cookie.
         // If not do nothing - we do not want to return a authentication cookie
         // if a REST call has been made with basic auth since this is the job of the LoginController
-        this.refreshAuthorizationCookie(httpServletRequest, httpServletResponse);
+        this.refreshAuthorizationCookie();
         this.refreshTenantCookie(httpServletRequest, httpServletResponse);
 
       } else {

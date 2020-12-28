@@ -1,9 +1,18 @@
 package com.bosch.inst.base.security.keycloak.service.impl;
 
+import static graphql.Assert.assertTrue;
+import static org.springframework.test.util.AssertionErrors.assertEquals;
+
+import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.bosch.inst.base.security.keycloak.service.IKeycloakService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.Cookie;
@@ -20,11 +29,19 @@ import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @Slf4j
@@ -51,6 +68,47 @@ public class KeycloakService implements IKeycloakService {
         .resteasyClient(new ResteasyClientBuilder().connectionPoolSize(20).build())
         .build();
     return keycloak;
+  }
+
+  @Override
+  public AccessTokenResponse getAccessToken(Credentials credentials)
+      throws URISyntaxException, JsonProcessingException {
+    String realm = credentials.getTenant();
+    KeycloakDeployment deployment = getRealmInfo(realm);
+    String authServerUrl = deployment.getAuthServerBaseUrl();
+
+    // data for token request
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("grant_type", "password");
+    params.add("client_id", deployment.getResourceName());
+    params.add("username", credentials.getUsername());
+    params.add("password", credentials.getPassword());
+
+    // construct token request (including authorization for client(
+    RequestEntity<MultiValueMap<String, String>> authRequest = RequestEntity
+        .post(new URI(authServerUrl +
+            "/realms/" + realm + "/protocol/openid-connect/token"))
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .accept(MediaType.APPLICATION_JSON)
+        .header("Authorization",
+            httpBasicAuthorization(credentials.getTenant(),
+                deployment.getResourceCredentials().get("secret").toString()))
+        .body(params);
+
+    // execute request and test for success
+    RestTemplate restTemplate = new RestTemplate();
+    ResponseEntity<String> response = restTemplate.exchange(authRequest, String.class);
+    assertEquals("", HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
+
+    // extract access token (JWT) from response
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    AccessTokenResponse tokenResponse = objectMapper
+        .readValue(response.getBody(), AccessTokenResponse.class);
+
+    return tokenResponse;
   }
 
   @Override
@@ -254,5 +312,9 @@ public class KeycloakService implements IKeycloakService {
         .filter(c -> key.equals(c.getName()))
         .map(Cookie::getValue)
         .findAny();
+  }
+
+  private String httpBasicAuthorization(String username, String password) {
+    return "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
   }
 }

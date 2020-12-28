@@ -1,8 +1,12 @@
 package com.bosch.inst.base.security.keycloak.service;
 
+import com.bosch.inst.base.security.keycloak.auth.Credentials;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.net.URISyntaxException;
 import java.util.List;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.admin.client.Keycloak;
+import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -11,6 +15,9 @@ public interface IKeycloakService {
 
 
   Keycloak getKeycloakInstance();
+
+  AccessTokenResponse getAccessToken(Credentials credentials)
+      throws URISyntaxException, JsonProcessingException;
 
   UserRepresentation getLoginUser();
 

@@ -10,12 +10,10 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.keycloak.KeycloakPrincipal;
-import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
+import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.Authentication;
 
 /**
  * Handler for working with the authorization cookie.<br> The authorization cookie is used to login
@@ -40,6 +38,12 @@ import org.springframework.security.core.Authentication;
 public class AuthorizationCookieHandler {
 
   @Autowired
+  private HttpServletRequest request;
+
+  @Autowired
+  private HttpServletResponse response;
+
+  @Autowired
   private HttpProperties httpProperties;
 
   @Autowired
@@ -52,28 +56,15 @@ public class AuthorizationCookieHandler {
    * @param response       The response to enrich with the authentication cookie
    * @param authentication The authentication that contains the JWT which should be set as cookie
    */
-  public void setAuthenticationCookie(HttpServletRequest request,
-      HttpServletResponse response, Authentication authentication) {
-    log.debug("CookieHandler.setAuthenticationCookie");
-    // For swagger-ui static files, when open the index page with TOKEN provided, the authentication will be null. to prevent error, check if authentication is null
-    String pathInfo = request.getServletPath();
-    if (null == authentication && httpProperties.getWhitelist().contains(pathInfo)) {
-      return;
-    }
-    log.debug("Adding cookie with authorization token for user: {}", authentication.getPrincipal());
-    KeycloakAuthenticationToken authenticationToken = (KeycloakAuthenticationToken) request
-        .getUserPrincipal();
-    KeycloakPrincipal principal = (KeycloakPrincipal) authenticationToken.getPrincipal();
-
-    String token = principal.getKeycloakSecurityContext().getIdTokenString();
+  public void setAuthenticationCookie(AccessTokenResponse tokenResponse) {
+    String token = tokenResponse.getToken();
     String domain = getCookieDomain(request.getServerName());
     response.addCookie(createLoginCookie(httpProperties.getCookie().getName(), token, domain));
     response.addHeader(credentialsProperties.getHeader(), token);
   }
 
-  public void setTenantCookie(HttpServletRequest httpServletRequest, HttpServletResponse response,
-      String tenant) {
-    String domain = getCookieDomain(httpServletRequest.getServerName());
+  public void setTenantCookie(String tenant) {
+    String domain = getCookieDomain(request.getServerName());
     response.addCookie(this.createLoginCookie(TENANT_COOKIE_NAME, tenant, domain));
   }
 
