@@ -5,21 +5,19 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
 import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -62,20 +60,21 @@ public class LoginController {
 //    authorizationCookieHandler.setAuthenticationCookie(request, response, authentication);
 //  }
 
+  @SneakyThrows
   @RequestMapping(value = LOGIN_PATH, method = POST)
   @Operation(description = "Login the system, and put credentials into cookies")
-  public ResponseEntity login(HttpServletRequest request, HttpServletResponse response,
+  public ResponseEntity login(
       @Valid
       @Parameter(description = "User provided credentials")
-      @RequestBody Credentials credentials) throws URISyntaxException, JsonProcessingException {
-
+      @RequestBody Credentials credentials) {
+//    String tenant = request.getHeader(TENANT_HEADER_NAME);
     AccessTokenResponse tokenResponse = keycloakService.getAccessToken(credentials);
 
     authorizationCookieHandler.setAuthenticationCookie(tokenResponse);
 
-    if (StringUtils.hasText(credentials.getTenant())) {
-      authorizationCookieHandler.setTenantCookie(credentials.getTenant());
-    }
+//    if (StringUtils.hasText(tenant)) {
+//      authorizationCookieHandler.setTenantCookie(tenant);
+//    }
     return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
 //    TenantUserPasswordToken token = new TenantUserPasswordToken(credentials.getUsername(),
 //        credentials.getPassword(), credentials.getTenant());

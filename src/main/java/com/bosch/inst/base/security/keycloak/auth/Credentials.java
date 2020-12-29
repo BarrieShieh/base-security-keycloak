@@ -5,8 +5,6 @@ import lombok.NonNull;
 
 @Data
 public class Credentials {
-
-  private String tenant;
   @NonNull
   private String username;
   @NonNull
