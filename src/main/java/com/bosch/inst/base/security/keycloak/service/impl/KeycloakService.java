@@ -49,6 +49,7 @@ import org.springframework.web.client.RestTemplate;
 public class KeycloakService implements IKeycloakService {
 
   public static String TENANT_COOKIE_NAME = "TENANT";
+  public static String TENANT_QUERY_PARAM_NAME = "tenant";
   public static String ACCESS_TOKEN_COOKIE_NAME = "TOKEN";
   public static String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 

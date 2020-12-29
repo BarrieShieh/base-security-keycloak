@@ -1,6 +1,7 @@
 package com.bosch.inst.base.security.keycloak.servlet;
 
 import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_COOKIE_NAME;
+import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_QUERY_PARAM_NAME;
 
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
@@ -14,7 +15,6 @@ import lombok.SneakyThrows;
 import org.keycloak.adapters.KeycloakConfigResolver;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.spi.HttpFacade;
-import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,7 +142,8 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
       public KeycloakDeployment resolve(HttpFacade.Request facade) {
         String uri = facade.getRelativePath();
         if ("/login".equals(uri)) {
-          return new KeycloakSpringBootConfigResolver().resolve(facade);
+//          return new KeycloakSpringBootConfigResolver().resolve(facade);
+          return keycloakService.getRealmInfo(facade.getQueryParamValue(TENANT_QUERY_PARAM_NAME));
         } else {
           String tenant = facade.getCookie(TENANT_COOKIE_NAME).getValue();
           return keycloakService.getRealmInfo(tenant);
