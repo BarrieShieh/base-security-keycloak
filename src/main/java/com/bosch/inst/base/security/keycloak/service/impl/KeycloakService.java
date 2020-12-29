@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
-import java.util.Optional;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
@@ -118,7 +117,7 @@ public class KeycloakService implements IKeycloakService {
   @Override
   public AccessTokenResponse refreshAccessToken() {
     String realm = getTenant(request);
-    String refreshToken = getCookie(request, REFRESH_TOKEN_COOKIE_NAME).get();
+    String refreshToken = getCookie(request, REFRESH_TOKEN_COOKIE_NAME);
 
     KeycloakDeployment deployment = getRealmInfo(realm);
     String authServerUrl = deployment.getAuthServerBaseUrl();
@@ -368,7 +367,7 @@ public class KeycloakService implements IKeycloakService {
   public String getTenant(HttpServletRequest httpServletRequest) {
     String tenant = null;
     if (null != getCookie(httpServletRequest, TENANT_COOKIE_NAME)) {
-      tenant = getCookie(httpServletRequest, TENANT_COOKIE_NAME).get();
+      tenant = getCookie(httpServletRequest, TENANT_COOKIE_NAME);
     }
     if (null != httpServletRequest.getHeader(TENANT_HEADER_NAME)) {
       tenant = httpServletRequest.getHeader(TENANT_HEADER_NAME);
@@ -377,11 +376,20 @@ public class KeycloakService implements IKeycloakService {
   }
 
   @Override
-  public Optional<String> getCookie(HttpServletRequest httpServletRequest, String key) {
-    return Arrays.stream(httpServletRequest.getCookies())
-        .filter(c -> key.equals(c.getName()))
-        .map(Cookie::getValue)
-        .findAny();
+  public String getCookie(HttpServletRequest httpServletRequest, String key) {
+    Cookie[] cookies = request.getCookies();
+
+    if (cookies != null) {
+      for (Cookie cookie : cookies) {
+        if (cookie.getName().equals(key)) {
+          //do something
+          //value can be retrieved using #cookie.getValue()
+          return cookie.getValue();
+        }
+      }
+    }
+
+    return null;
   }
 
   private String httpBasicAuthorization(String username, String password) {

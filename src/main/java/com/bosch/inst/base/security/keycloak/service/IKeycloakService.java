@@ -4,7 +4,6 @@ import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.spi.HttpFacade;
@@ -67,5 +66,5 @@ public interface IKeycloakService {
 
   String getTenant(HttpServletRequest httpServletRequest);
 
-  Optional<String> getCookie(HttpServletRequest httpServletRequest, String key);
+  String getCookie(HttpServletRequest httpServletRequest, String key);
 }
