@@ -1,5 +1,6 @@
 package com.bosch.inst.base.security.keycloak.login;
 
+import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_HEADER_NAME;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 import com.bosch.inst.base.security.keycloak.auth.Credentials;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -64,17 +66,15 @@ public class LoginController {
   @RequestMapping(value = LOGIN_PATH, method = POST)
   @Operation(description = "Login the system, and put credentials into cookies")
   public ResponseEntity login(
+      @Parameter(description = "Tenant")
+      @RequestHeader(value = TENANT_HEADER_NAME) String tenant,
       @Valid
       @Parameter(description = "User provided credentials")
       @RequestBody Credentials credentials) {
-//    String tenant = request.getHeader(TENANT_HEADER_NAME);
     AccessTokenResponse tokenResponse = keycloakService.getAccessToken(credentials);
 
     authorizationCookieHandler.setAuthenticationCookie(tokenResponse);
-
-//    if (StringUtils.hasText(tenant)) {
-//      authorizationCookieHandler.setTenantCookie(tenant);
-//    }
+    authorizationCookieHandler.setTenantCookie(tenant);
     return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
 //    TenantUserPasswordToken token = new TenantUserPasswordToken(credentials.getUsername(),
 //        credentials.getPassword(), credentials.getTenant());

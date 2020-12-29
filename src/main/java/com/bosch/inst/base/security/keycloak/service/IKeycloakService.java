@@ -4,7 +4,10 @@ import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
 import org.keycloak.adapters.KeycloakDeployment;
+import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.GroupRepresentation;
@@ -59,4 +62,10 @@ public interface IKeycloakService {
   List<GroupRepresentation> getRoleGroupMembers(String roleName);
 
   KeycloakDeployment getRealmInfo(String tenant);
+
+  String getTenant(HttpFacade.Request facade);
+
+  String getTenant(HttpServletRequest httpServletRequest);
+
+  Optional<String> getCookie(HttpServletRequest httpServletRequest, String key);
 }

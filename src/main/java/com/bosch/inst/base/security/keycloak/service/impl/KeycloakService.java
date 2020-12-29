@@ -23,6 +23,7 @@ import org.keycloak.KeycloakPrincipal;
 import org.keycloak.KeycloakSecurityContext;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.KeycloakDeploymentBuilder;
+import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
@@ -46,17 +47,17 @@ import org.springframework.web.client.RestTemplate;
 @Slf4j
 public class KeycloakService implements IKeycloakService {
 
-  public static String TENANT_HEADER_NAME = "x-tenant";
-  public static String TENANT_COOKIE_NAME = "TENANT";
-  public static String ACCESS_TOKEN_COOKIE_NAME = "TOKEN";
-  public static String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
+  public static final String TENANT_HEADER_NAME = "x-tenant";
+  public static final String TENANT_COOKIE_NAME = "TENANT";
+  public static final String ACCESS_TOKEN_COOKIE_NAME = "TOKEN";
+  public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
   @Autowired
   private HttpServletRequest request;
 
   @Override
   public Keycloak getKeycloakInstance() {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     KeycloakDeployment deployment = getRealmInfo(realm);
     String authServerUrl = deployment.getAuthServerBaseUrl();
 
@@ -75,7 +76,7 @@ public class KeycloakService implements IKeycloakService {
   @SneakyThrows
   @Override
   public AccessTokenResponse getAccessToken(Credentials credentials) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     KeycloakDeployment deployment = getRealmInfo(realm);
     String authServerUrl = deployment.getAuthServerBaseUrl();
 
@@ -116,8 +117,8 @@ public class KeycloakService implements IKeycloakService {
   @SneakyThrows
   @Override
   public AccessTokenResponse refreshAccessToken() {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
-    String refreshToken = readCookie(REFRESH_TOKEN_COOKIE_NAME).get();
+    String realm = getTenant(request);
+    String refreshToken = getCookie(request, REFRESH_TOKEN_COOKIE_NAME).get();
 
     KeycloakDeployment deployment = getRealmInfo(realm);
     String authServerUrl = deployment.getAuthServerBaseUrl();
@@ -164,7 +165,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public UserRepresentation selfRegistration(UserRepresentation user) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
 
     Keycloak keycloakInstance = getKeycloakInstance();
     user.setEnabled(true);
@@ -193,7 +194,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void sendVerifyEmail(String userId) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
@@ -203,7 +204,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void resetPasswordEmail(String username) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     List<UserRepresentation> users = realmResource.users().search(username);
@@ -215,7 +216,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void setRoles(String userId, List<RoleRepresentation> roles) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
@@ -225,7 +226,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public void setGroups(String userId, List<String> groupIds) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
@@ -237,7 +238,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public UserRepresentation getUserById(String userId) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).toRepresentation();
@@ -245,7 +246,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getUserByUsername(String username) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().search(username);
@@ -253,7 +254,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getUsers() {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().list();
@@ -261,7 +262,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public GroupRepresentation getGroupById(String groupId) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.groups().group(groupId).toRepresentation();
@@ -269,7 +270,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<GroupRepresentation> getGroupsByUserId(String userId) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).groups();
@@ -277,7 +278,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<GroupRepresentation> getGroups() {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.groups().groups();
@@ -285,7 +286,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getGroupUserMembers(String groupId) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
@@ -294,7 +295,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<RoleRepresentation> getRolesByUserId(String userId) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).roles().realmLevel().listAll();
@@ -302,7 +303,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public RoleRepresentation getRoleByName(String roleName) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.roles().get(roleName).toRepresentation();
@@ -310,7 +311,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<RoleRepresentation> getRoles() {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.roles().list();
@@ -318,7 +319,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<UserRepresentation> getRoleUserMembers(String roleName) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
@@ -327,7 +328,7 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public List<GroupRepresentation> getRoleGroupMembers(String roleName) {
-    String realm = request.getHeader(TENANT_HEADER_NAME);
+    String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
@@ -351,8 +352,33 @@ public class KeycloakService implements IKeycloakService {
     return keycloakDeployment;
   }
 
-  private Optional<String> readCookie(String key) {
-    return Arrays.stream(request.getCookies())
+  @Override
+  public String getTenant(HttpFacade.Request facade) {
+    String tenant = null;
+    if (null != facade.getCookie(TENANT_COOKIE_NAME)) {
+      tenant = facade.getCookie(TENANT_COOKIE_NAME).getValue();
+    }
+    if (null != facade.getHeader(TENANT_HEADER_NAME)) {
+      tenant = facade.getHeader(TENANT_HEADER_NAME);
+    }
+    return tenant;
+  }
+
+  @Override
+  public String getTenant(HttpServletRequest httpServletRequest) {
+    String tenant = null;
+    if (null != getCookie(httpServletRequest, TENANT_COOKIE_NAME)) {
+      tenant = getCookie(httpServletRequest, TENANT_COOKIE_NAME).get();
+    }
+    if (null != httpServletRequest.getHeader(TENANT_HEADER_NAME)) {
+      tenant = httpServletRequest.getHeader(TENANT_HEADER_NAME);
+    }
+    return tenant;
+  }
+
+  @Override
+  public Optional<String> getCookie(HttpServletRequest httpServletRequest, String key) {
+    return Arrays.stream(httpServletRequest.getCookies())
         .filter(c -> key.equals(c.getName()))
         .map(Cookie::getValue)
         .findAny();
