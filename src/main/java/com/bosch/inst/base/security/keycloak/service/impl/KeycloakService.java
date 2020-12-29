@@ -18,6 +18,7 @@ import java.util.Optional;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.KeycloakPrincipal;
@@ -48,6 +49,8 @@ import org.springframework.web.client.RestTemplate;
 public class KeycloakService implements IKeycloakService {
 
   public static String TENANT_COOKIE_NAME = "TENANT";
+  public static String ACCESS_TOKEN_COOKIE_NAME = "TOKEN";
+  public static String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
 
   @Autowired
   private HttpServletRequest request;
@@ -80,7 +83,7 @@ public class KeycloakService implements IKeycloakService {
     // data for token request
     MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
     params.add("grant_type", "password");
-    params.add("client_id", deployment.getResourceName());
+//    params.add("client_id", deployment.getResourceName());
     params.add("username", credentials.getUsername());
     params.add("password", credentials.getPassword());
 
@@ -91,7 +94,49 @@ public class KeycloakService implements IKeycloakService {
         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
         .accept(MediaType.APPLICATION_JSON)
         .header("Authorization",
-            httpBasicAuthorization(credentials.getTenant(),
+            httpBasicAuthorization(deployment.getResourceName(),
+                deployment.getResourceCredentials().get("secret").toString()))
+        .body(params);
+
+    // execute request and test for success
+    RestTemplate restTemplate = new RestTemplate();
+    ResponseEntity<String> response = restTemplate.exchange(authRequest, String.class);
+    assertEquals("", HttpStatus.OK, response.getStatusCode());
+    assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
+
+    // extract access token (JWT) from response
+
+    ObjectMapper objectMapper = new ObjectMapper();
+
+    AccessTokenResponse tokenResponse = objectMapper
+        .readValue(response.getBody(), AccessTokenResponse.class);
+
+    return tokenResponse;
+  }
+
+  @SneakyThrows
+  @Override
+  public AccessTokenResponse refreshAccessToken() {
+    String realm = readCookie(TENANT_COOKIE_NAME).get();
+    String refreshToken = readCookie(REFRESH_TOKEN_COOKIE_NAME).get();
+
+    KeycloakDeployment deployment = getRealmInfo(realm);
+    String authServerUrl = deployment.getAuthServerBaseUrl();
+
+    // data for token request
+    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    params.add("grant_type", "refresh_token");
+//    params.add("client_id", deployment.getResourceName());
+
+    params.add("refresh_token", refreshToken);
+    // construct token request (including authorization for client(
+    RequestEntity<MultiValueMap<String, String>> authRequest = RequestEntity
+        .post(new URI(authServerUrl +
+            "/realms/" + realm + "/protocol/openid-connect/token"))
+        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+        .accept(MediaType.APPLICATION_JSON)
+        .header("Authorization",
+            httpBasicAuthorization(deployment.getResourceName(),
                 deployment.getResourceCredentials().get("secret").toString()))
         .body(params);
 
@@ -291,6 +336,7 @@ public class KeycloakService implements IKeycloakService {
     return new ArrayList<>(realmResource.roles().get(roleName).getRoleGroupMembers());
   }
 
+  @SneakyThrows
   @Override
   public KeycloakDeployment getRealmInfo(String tenant) {
     KeycloakDeployment keycloakDeployment;

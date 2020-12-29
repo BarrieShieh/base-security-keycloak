@@ -4,12 +4,12 @@ import static org.springframework.http.HttpStatus.valueOf;
 
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
-import java.io.IOException;
+import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
 import javax.servlet.FilterChain;
-import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -24,7 +24,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
     HttpProperties.class
 })
 @Import({
-    AuthorizationCookieHandler.class
+    AuthorizationCookieHandler.class,
+    KeycloakService.class
 })
 public class RefreshLoginCookieFilter extends OncePerRequestFilter {
 
@@ -40,13 +41,16 @@ public class RefreshLoginCookieFilter extends OncePerRequestFilter {
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
 
+  @Autowired
+  private KeycloakService keycloakService;
+
   private void refreshAuthorizationCookie() {
     Cookie loginCookie = authorizationCookieHandler.getAuthorizationCookie(request);
     if (loginCookie != null) {
       log.debug(
           "Processed request with response HTTP status {} - will add fresh authorization cookie",
           response.getStatus());
-//      authorizationCookieHandler.setAuthenticationCookie();
+      authorizationCookieHandler.setAuthenticationCookie(keycloakService.refreshAccessToken());
     } else {
       log.debug(
           "Processed request with response HTTP status {} - will NOT add fresh authorization cookie "
@@ -71,10 +75,10 @@ public class RefreshLoginCookieFilter extends OncePerRequestFilter {
     }
   }
 
+  @SneakyThrows
   @Override
   protected void doFilterInternal(HttpServletRequest httpServletRequest,
-      HttpServletResponse httpServletResponse, FilterChain filterChain)
-      throws ServletException, IOException {
+      HttpServletResponse httpServletResponse, FilterChain filterChain) {
     if (!matchWhiteList(httpServletRequest.getServletPath())) {
       if (valueOf(httpServletResponse.getStatus()).is2xxSuccessful()) {
         // Check whether the request contains the login cookie.

@@ -19,6 +19,9 @@ public interface IKeycloakService {
   AccessTokenResponse getAccessToken(Credentials credentials)
       throws URISyntaxException, JsonProcessingException;
 
+  AccessTokenResponse refreshAccessToken()
+      throws URISyntaxException, JsonProcessingException;
+
   UserRepresentation getLoginUser();
 
   UserRepresentation selfRegistration(UserRepresentation user);

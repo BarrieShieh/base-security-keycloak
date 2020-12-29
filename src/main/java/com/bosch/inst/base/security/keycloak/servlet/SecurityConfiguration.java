@@ -10,7 +10,10 @@ import com.bosch.inst.base.security.keycloak.filter.EnforceSecureLoginFilter;
 import com.bosch.inst.base.security.keycloak.filter.RefreshLoginCookieFilter;
 import com.bosch.inst.base.security.keycloak.filter.XRequestedHeaderFilter;
 import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
+import lombok.SneakyThrows;
 import org.keycloak.adapters.KeycloakConfigResolver;
+import org.keycloak.adapters.KeycloakDeployment;
+import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
@@ -117,10 +120,10 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
     return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
   }
 
-  @Bean
-  public KeycloakConfigResolver KeycloakConfigResolver() {
-    return new KeycloakSpringBootConfigResolver();
-  }
+//  @Bean
+//  public KeycloakConfigResolver KeycloakConfigResolver() {
+//    return new KeycloakSpringBootConfigResolver();
+//  }
 
   /**
    * Overrides default keycloak config resolver behaviour (/WEB-INF/keycloak.json) by a simple
@@ -131,22 +134,22 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
    *
    * @return keycloak config resolver
    */
-//  @Bean
-//  public KeycloakConfigResolver keycloakConfigResolver() {
-//    return new KeycloakConfigResolver() {
-//      @Override
-//      public KeycloakDeployment resolve(HttpFacade.Request facade) {
-//        if (null != facade.getCookie(TENANT_COOKIE_NAME)) {
-//          String tenant = facade.getCookie(TENANT_COOKIE_NAME).getValue();
-//
-//          return keycloakService.getRealmInfo(tenant);
-//        } else {
-//          return new KeycloakSpringBootConfigResolver().resolve(facade);
-//        }
-//      }
-//    };
-//
-//  }
+  @Bean
+  public KeycloakConfigResolver keycloakConfigResolver() {
+    return new KeycloakConfigResolver() {
+      @SneakyThrows
+      @Override
+      public KeycloakDeployment resolve(HttpFacade.Request facade) {
+        String uri = facade.getRelativePath();
+        if ("/login".equals(uri)) {
+          return new KeycloakSpringBootConfigResolver().resolve(facade);
+        } else {
+          String tenant = facade.getCookie(TENANT_COOKIE_NAME).getValue();
+          return keycloakService.getRealmInfo(tenant);
+        }
+      }
+    };
+  }
 
 
 }
