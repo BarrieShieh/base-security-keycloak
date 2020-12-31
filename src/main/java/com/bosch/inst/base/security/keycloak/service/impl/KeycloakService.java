@@ -50,6 +50,7 @@ public class KeycloakService implements IKeycloakService {
   public static final String TENANT_COOKIE_NAME = "TENANT";
   public static final String ACCESS_TOKEN_COOKIE_NAME = "TOKEN";
   public static final String REFRESH_TOKEN_COOKIE_NAME = "REFRESH_TOKEN";
+  public static final String ROOT_TENANT_NAME = "master";
 
   @Autowired
   private HttpServletRequest request;

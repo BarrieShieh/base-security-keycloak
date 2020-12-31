@@ -1,5 +1,6 @@
 package com.bosch.inst.base.security.keycloak.servlet;
 
+import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.ROOT_TENANT_NAME;
 import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_COOKIE_NAME;
 
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
@@ -142,7 +143,7 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
 //        String uri = facade.getRelativePath();
 
         String tenant = keycloakService.getTenant(facade);
-        return keycloakService.getRealmInfo(tenant);
+        return keycloakService.getRealmInfo(null != tenant ? tenant : ROOT_TENANT_NAME);
 
 //        if ("/login".equals(uri)) {
 ////          return new KeycloakSpringBootConfigResolver().resolve(facade);
