@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.5:
+
+* Add getRealms API
+
 == 0.0.4:
 
 * Use root tenant when no tenant available

@@ -10,6 +10,7 @@ import org.keycloak.adapters.spi.HttpFacade;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 
@@ -23,6 +24,8 @@ public interface IKeycloakService {
 
   AccessTokenResponse refreshAccessToken()
       throws URISyntaxException, JsonProcessingException;
+
+  List<RealmRepresentation> getRealms();
 
   UserRepresentation getLoginUser();
 

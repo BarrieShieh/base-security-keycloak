@@ -27,9 +27,11 @@ import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.RealmsResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.idm.GroupRepresentation;
+import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -154,6 +156,14 @@ public class KeycloakService implements IKeycloakService {
         .readValue(response.getBody(), AccessTokenResponse.class);
 
     return tokenResponse;
+  }
+
+
+  @Override
+  public List<RealmRepresentation> getRealms() {
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmsResource realmResources = keycloakInstance.realms();
+    return realmResources.findAll();
   }
 
   @Override
