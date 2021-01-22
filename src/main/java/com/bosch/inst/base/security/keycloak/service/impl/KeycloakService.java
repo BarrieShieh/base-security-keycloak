@@ -11,7 +11,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
@@ -30,6 +33,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.RealmsResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -168,9 +172,35 @@ public class KeycloakService implements IKeycloakService {
 
   @Override
   public UserRepresentation getLoginUser() {
+    String realm = getTenant(request);
     KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) request.getUserPrincipal();
     KeycloakPrincipal principal = (KeycloakPrincipal) token.getPrincipal();
-    return getUserById(principal.getName());
+    UserRepresentation user = getUserById(principal.getName());
+    List<String> realmRoles = this.getRealmLevelRolesByUserId(principal.getName()).stream()
+        .map(r -> r.getName()).collect(
+            Collectors.toList());
+    user.setRealmRoles(realmRoles);
+
+    Map<String, List<RoleRepresentation>> roles = this
+        .getClientLevelRolesByUserId(principal.getName());
+
+    Map<String, List<String>> clientsRoles = new HashMap<>();
+    for (Map.Entry<String, List<RoleRepresentation>> entry : roles.entrySet()) {
+      String mapKey = entry.getKey();
+      List<String> mapValue = entry.getValue().stream().map(r -> r.getName())
+          .collect(Collectors.toList());
+      clientsRoles.put(mapKey, mapValue);
+    }
+
+    user.setClientRoles(clientsRoles);
+
+//    String client = deployment.realm(realm).clients().findAll().get(0).getClientId();
+//    user.setClientRoles(new HashMap<String, List<String>>() {
+//      {
+//        put(client, clientsRoles);
+//      }
+//    });
+    return user;
   }
 
   @Override
@@ -304,11 +334,52 @@ public class KeycloakService implements IKeycloakService {
   }
 
   @Override
-  public List<RoleRepresentation> getRolesByUserId(String userId) {
+  public List<RoleRepresentation> getRealmLevelRolesByUserId(String userId) {
     String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).roles().realmLevel().listAll();
+  }
+
+  @Override
+  public Map<String, List<RoleRepresentation>> getClientLevelRolesByUserId(String userId) {
+    String realm = getTenant(request);
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmResource realmResource = keycloakInstance.realm(realm);
+
+//    Keycloak deployment = this.getKeycloakInstance();
+//
+//    List<ClientRepresentation> clients = deployment.realm(realm).clients().findAll();
+//
+//    Map<String, List<RoleRepresentation>> map = new HashMap<>();
+//
+//    for (ClientRepresentation client : clients) {
+//      List<RoleRepresentation> roles = realmResource.users().get(userId).roles()
+//          .clientLevel(client.getId()).listAll();
+//      map.put(client.getClientId(), roles);
+//    }
+
+//    RealmResource r = keycloakInstance.realm("spring-boot-quickstart");
+
+    List<ClientRepresentation> clients = keycloakInstance.realm(realm).clients().findAll();
+
+    Map<String, List<RoleRepresentation>> map = new HashMap<>();
+
+    for (ClientRepresentation client : clients) {
+      List<RoleRepresentation> roles = realmResource.users().get(userId).roles()
+          .clientLevel(client.getId()).listAll();
+      map.put(client.getClientId(), roles);
+    }
+
+    return map;
+  }
+
+  @Override
+  public List<RoleRepresentation> getAllRolesByUserId(String userId) {
+    String realm = getTenant(request);
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmResource realmResource = keycloakInstance.realm(realm);
+    return realmResource.users().get(userId).roles().getAll().getRealmMappings();
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.spi.HttpFacade;
@@ -53,7 +54,11 @@ public interface IKeycloakService {
 
   List<UserRepresentation> getGroupUserMembers(String groupId);
 
-  List<RoleRepresentation> getRolesByUserId(String userId);
+  List<RoleRepresentation> getRealmLevelRolesByUserId(String userId);
+
+  Map<String, List<RoleRepresentation>> getClientLevelRolesByUserId(String userId);
+
+  List<RoleRepresentation> getAllRolesByUserId(String userId);
 
   RoleRepresentation getRoleByName(String roleName);
 
