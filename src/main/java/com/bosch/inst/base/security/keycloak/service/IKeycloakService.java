@@ -60,6 +60,8 @@ public interface IKeycloakService {
 
   List<RoleRepresentation> getAllRolesByUserId(String userId);
 
+  List<String> getRoleNamesByLoginUser();
+
   RoleRepresentation getRoleByName(String roleName);
 
   List<RoleRepresentation> getRoles();

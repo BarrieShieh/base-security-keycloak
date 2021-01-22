@@ -14,6 +14,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -347,20 +348,6 @@ public class KeycloakService implements IKeycloakService {
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
 
-//    Keycloak deployment = this.getKeycloakInstance();
-//
-//    List<ClientRepresentation> clients = deployment.realm(realm).clients().findAll();
-//
-//    Map<String, List<RoleRepresentation>> map = new HashMap<>();
-//
-//    for (ClientRepresentation client : clients) {
-//      List<RoleRepresentation> roles = realmResource.users().get(userId).roles()
-//          .clientLevel(client.getId()).listAll();
-//      map.put(client.getClientId(), roles);
-//    }
-
-//    RealmResource r = keycloakInstance.realm("spring-boot-quickstart");
-
     List<ClientRepresentation> clients = keycloakInstance.realm(realm).clients().findAll();
 
     Map<String, List<RoleRepresentation>> map = new HashMap<>();
@@ -380,6 +367,20 @@ public class KeycloakService implements IKeycloakService {
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().get(userId).roles().getAll().getRealmMappings();
+  }
+
+  @Override
+  public List<String> getRoleNamesByLoginUser() {
+    String realm = getTenant(request);
+    KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) request.getUserPrincipal();
+    KeycloakPrincipal principal = (KeycloakPrincipal) token.getPrincipal();
+
+    KeycloakDeployment deployment = getRealmInfo(realm);
+
+    String clientId = deployment.getResourceName();
+    Set<String> set = principal.getKeycloakSecurityContext().getToken().getResourceAccess(clientId)
+        .getRoles();
+    return new ArrayList<>(set);
   }
 
   @Override
