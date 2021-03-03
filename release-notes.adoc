@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.8:
+
+* Add Auditor provider
+
 == 0.0.7:
 
 * Modify roles API
