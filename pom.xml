@@ -6,7 +6,7 @@
 
   <groupId>com.bosch.inst</groupId>
   <artifactId>base-security-keycloak</artifactId>
-  <version>0.0.8-SNAPSHOT</version>
+  <version>0.0.9-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>base :: security keycloak</name>
@@ -15,16 +15,16 @@
   <parent>
     <groupId>com.bosch.inst</groupId>
     <artifactId>base</artifactId>
-    <version>0.4.44-SNAPSHOT</version>
+    <version>0.4.45-SNAPSHOT</version>
   </parent>
 
   <properties>
-    <base.version>0.4.44-SNAPSHOT</base.version>
+    <base.version>0.4.45-SNAPSHOT</base.version>
     <keycloak.version>12.0.4</keycloak.version>
 
     <!-- SonarQube properties -->
-    <sonar.projectName>com.bosch.iox.zeno.${project.artifactId}</sonar.projectName>
-    <sonar.projectKey>com.bosch.iox.zeno.${project.artifactId}</sonar.projectKey>
+    <sonar.projectName>com.bosch.iox.${project.artifactId}</sonar.projectName>
+    <sonar.projectKey>com.bosch.iox.${project.artifactId}</sonar.projectKey>
     <sonar.sources>${project.basedir}/src/main/</sonar.sources>
     <sonar.exclusions>**/target/**</sonar.exclusions>
     <sonar.tests>${project.basedir}/src/test/</sonar.tests>

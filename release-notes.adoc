@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.9:
+
+* Update sonar project key
+
 == 0.0.8:
 
 * Add Auditor provider
