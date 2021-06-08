@@ -55,9 +55,7 @@ runPipeline {
         }
     }
 
-    onlyOnMasterAndDev {
-        stage('Package & Publish to Nexus') {
-            deployMavenArtifacts()
-        }
+    stage('Package & Publish to Nexus') {
+        deployMavenArtifacts()
     }
 }
