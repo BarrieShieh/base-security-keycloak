@@ -43,9 +43,9 @@ runPipeline {
 //        }
 //    }
 
-    stage('SonarQube analysis') {
-        qualityAnalysisSonarQube()
-    }
+//    stage('SonarQube analysis') {
+//        qualityAnalysisSonarQube()
+//    }
 
     onlyOnMaster {
         onlyOnRelease {
