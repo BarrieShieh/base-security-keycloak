@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.12:
+
+* Add error handler
+
 == 0.0.11:
 
 * Update pipeline
