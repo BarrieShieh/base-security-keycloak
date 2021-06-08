@@ -51,6 +51,9 @@ public class LoginController {
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
 
+  @Autowired
+  private LoginAdapter loginAdapter;
+
   public static final String LOGIN_PATH = "/login";
 
 //  @Operation(description = "Refresh credentials in cookies")
@@ -73,8 +76,10 @@ public class LoginController {
       @RequestBody Credentials credentials) {
     AccessTokenResponse tokenResponse = keycloakService.getAccessToken(credentials);
 
+    loginAdapter.before(tenant, credentials, tokenResponse);
     authorizationCookieHandler.setAuthenticationCookie(tokenResponse);
     authorizationCookieHandler.setTenantCookie(tenant);
+    loginAdapter.after(tenant, credentials, tokenResponse);
     return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
 //    TenantUserPasswordToken token = new TenantUserPasswordToken(credentials.getUsername(),
 //        credentials.getPassword(), credentials.getTenant());

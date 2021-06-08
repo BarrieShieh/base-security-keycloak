@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.10:
+
+* Add LoginAdapter
+
 == 0.0.9:
 
 * Update sonar project key
