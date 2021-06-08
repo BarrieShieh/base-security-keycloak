@@ -1,5 +1,6 @@
 package com.bosch.inst.base.security.keycloak;
 
+import com.bosch.inst.base.security.keycloak.config.KeycloakAdviser;
 import com.bosch.inst.base.security.keycloak.login.LoginController;
 import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
 import com.bosch.inst.base.security.keycloak.servlet.AuditorProvider;
@@ -11,7 +12,8 @@ import org.springframework.context.annotation.Import;
     SecurityConfiguration.class,
     AuditorProvider.class,
     KeycloakService.class,
-    LoginController.class
+    LoginController.class,
+    KeycloakAdviser.class
 })
 @Configuration
 public class SecureServletConfiguration {
