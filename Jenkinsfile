@@ -3,9 +3,6 @@
 projectName = ''
 projectVersion = ''
 
-technicalUserCredentialsId = 'technical_user'
-sonarQubeScanUserCredentialsId = 'rb-sonarqube-scan-user-token'
-
 runPipeline {
     stage('Checkout') {
         checkout scm
@@ -25,27 +22,19 @@ runPipeline {
     }
 
     stage('Clean') {
-        withMaven() {
-            sh "mvn clean"
-        }
+        cleanMavenArtifacts()
     }
 
     stage('Compile') {
-        withMaven() {
-            sh "mvn compile -DskipTests"
-        }
+        compileMavenArtifacts()
     }
 
     stage('Tests') {
-        withMaven() {
-            sh "mvn test"
-        }
+        testMavenArtifacts()
     }
 
     stage('Package') {
-        withMaven() {
-            sh 'mvn package -DskipTests'
-        }
+        buildMavenArtifacts()
     }
 
 //    stage('Nexus IQ analysis') {
@@ -55,40 +44,20 @@ runPipeline {
 //    }
 
     stage('SonarQube analysis') {
-        qualityAnalysisSonarQube(sonarQubeScanUserCredentialsId)
+        qualityAnalysisSonarQube()
     }
 
     onlyOnMaster {
         onlyOnRelease {
             stage('Add Tag to Git') {
-                updateGitTag(technicalUserCredentialsId, projectVersion)
+                updateGitTag(projectVersion)
             }
         }
     }
 
-    onlyOnDev {
-        onlyOnSnapshot {
-            stage('Publish to Nexus') {
-                withMaven() {
-                    sh "mvn deploy -P INSTNJ-SNAPSHOT -DskipTests"
-                }
-            }
+    onlyOnMasterAndDev {
+        stage('Package & Publish to Nexus') {
+            deployMavenArtifacts()
         }
     }
-
-    onlyOnMaster {
-        onlyOnRelease {
-            stage('Publish to Nexus') {
-                withMaven() {
-                    sh "mvn deploy -P INSTNJ-RELEASE -DskipTests"
-                }
-            }
-        }
-    }
-
-//    onlyOnDev {
-//        stage('Update Project version') {
-//            updateMavenPatchVersion(technicalUserCredentialsId)
-//        }
-//    }
 }
