@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.14:
+
+* Add exception handler
+
 == 0.0.13:
 
 * Fix class not load issue

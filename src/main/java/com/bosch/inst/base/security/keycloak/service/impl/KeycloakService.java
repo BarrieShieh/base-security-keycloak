@@ -4,10 +4,15 @@ import static graphql.Assert.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertEquals;
 
 import com.bosch.inst.base.security.keycloak.auth.Credentials;
+import com.bosch.inst.base.security.keycloak.exception.FailedRequestKeycloakException;
+import com.bosch.inst.base.security.keycloak.exception.InvalidKeycloakResponseException;
+import com.bosch.inst.base.security.keycloak.exception.InvalidTenantException;
 import com.bosch.inst.base.security.keycloak.service.IKeycloakService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -19,7 +24,6 @@ import java.util.stream.Collectors;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.KeycloakPrincipal;
@@ -80,7 +84,6 @@ public class KeycloakService implements IKeycloakService {
     return keycloak;
   }
 
-  @SneakyThrows
   @Override
   public AccessTokenResponse getAccessToken(Credentials credentials) {
     String realm = getTenant(request);
@@ -95,15 +98,20 @@ public class KeycloakService implements IKeycloakService {
     params.add("password", credentials.getPassword());
 
     // construct token request (including authorization for client(
-    RequestEntity<MultiValueMap<String, String>> authRequest = RequestEntity
-        .post(new URI(authServerUrl +
-            "/realms/" + realm + "/protocol/openid-connect/token"))
-        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .accept(MediaType.APPLICATION_JSON)
-        .header("Authorization",
-            httpBasicAuthorization(deployment.getResourceName(),
-                deployment.getResourceCredentials().get("secret").toString()))
-        .body(params);
+    RequestEntity<MultiValueMap<String, String>> authRequest = null;
+    try {
+      authRequest = RequestEntity
+          .post(new URI(authServerUrl +
+              "/realms/" + realm + "/protocol/openid-connect/token"))
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .accept(MediaType.APPLICATION_JSON)
+          .header("Authorization",
+              httpBasicAuthorization(deployment.getResourceName(),
+                  deployment.getResourceCredentials().get("secret").toString()))
+          .body(params);
+    } catch (URISyntaxException e) {
+      throw new FailedRequestKeycloakException("Request keycloak failed", e);
+    }
 
     // execute request and test for success
     RestTemplate restTemplate = new RestTemplate();
@@ -115,13 +123,16 @@ public class KeycloakService implements IKeycloakService {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-    AccessTokenResponse tokenResponse = objectMapper
-        .readValue(response.getBody(), AccessTokenResponse.class);
+    AccessTokenResponse tokenResponse = null;
+    try {
+      tokenResponse = objectMapper.readValue(response.getBody(), AccessTokenResponse.class);
+    } catch (JsonProcessingException e) {
+      throw new InvalidKeycloakResponseException("Invalid Keycloak response!", e);
+    }
 
     return tokenResponse;
   }
 
-  @SneakyThrows
   @Override
   public AccessTokenResponse refreshAccessToken() {
     String realm = getTenant(request);
@@ -137,15 +148,20 @@ public class KeycloakService implements IKeycloakService {
 
     params.add("refresh_token", refreshToken);
     // construct token request (including authorization for client(
-    RequestEntity<MultiValueMap<String, String>> authRequest = RequestEntity
-        .post(new URI(authServerUrl +
-            "/realms/" + realm + "/protocol/openid-connect/token"))
-        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-        .accept(MediaType.APPLICATION_JSON)
-        .header("Authorization",
-            httpBasicAuthorization(deployment.getResourceName(),
-                deployment.getResourceCredentials().get("secret").toString()))
-        .body(params);
+    RequestEntity<MultiValueMap<String, String>> authRequest = null;
+    try {
+      authRequest = RequestEntity
+          .post(new URI(authServerUrl +
+              "/realms/" + realm + "/protocol/openid-connect/token"))
+          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+          .accept(MediaType.APPLICATION_JSON)
+          .header("Authorization",
+              httpBasicAuthorization(deployment.getResourceName(),
+                  deployment.getResourceCredentials().get("secret").toString()))
+          .body(params);
+    } catch (URISyntaxException e) {
+      throw new FailedRequestKeycloakException("Request keycloak failed", e);
+    }
 
     // execute request and test for success
     RestTemplate restTemplate = new RestTemplate();
@@ -157,8 +173,13 @@ public class KeycloakService implements IKeycloakService {
 
     ObjectMapper objectMapper = new ObjectMapper();
 
-    AccessTokenResponse tokenResponse = objectMapper
-        .readValue(response.getBody(), AccessTokenResponse.class);
+    AccessTokenResponse tokenResponse = null;
+    try {
+      tokenResponse = objectMapper
+          .readValue(response.getBody(), AccessTokenResponse.class);
+    } catch (JsonProcessingException e) {
+      throw new InvalidKeycloakResponseException("Invalid Keycloak response!", e);
+    }
 
     return tokenResponse;
   }
@@ -417,16 +438,18 @@ public class KeycloakService implements IKeycloakService {
     return new ArrayList<>(realmResource.roles().get(roleName).getRoleGroupMembers());
   }
 
-  @SneakyThrows
   @Override
   public KeycloakDeployment getRealmInfo(String tenant) {
+    if (null == tenant) {
+      throw new InvalidTenantException("Tenant is null!");
+    }
     KeycloakDeployment keycloakDeployment;
 
     String path = "/keycloak/" + tenant + ".json";
     InputStream configInputStream = getClass().getResourceAsStream(path);
 
     if (configInputStream == null) {
-      throw new RuntimeException("Could not load Keycloak deployment info: " + path);
+      throw new InvalidTenantException("Could not load Keycloak deployment info: " + path);
     } else {
       keycloakDeployment = KeycloakDeploymentBuilder.build(configInputStream);
     }
