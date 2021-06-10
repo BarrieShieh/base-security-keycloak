@@ -240,14 +240,14 @@ public class KeycloakService implements IKeycloakService {
     Response response = keycloakInstance.realm(realm).users().create(user);
     log.info("Response |  Status: {} | Status Info: {}", response.getStatus(),
         response.getStatusInfo());
-    String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
-    List<RoleRepresentation> roleRepresentations = new ArrayList<>();
-
-    for (String role : user.getRealmRoles()) {
-      roleRepresentations.add(keycloakInstance.realm(realm).roles().get(role).toRepresentation());
+    if (!HttpStatus.valueOf(response.getStatus()).is2xxSuccessful()) {
+      throw new InvalidKeycloakResponseException(response.getStatusInfo().toString());
     }
 
-    setRoles(userId, roleRepresentations);
+    String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
+
+    setRealmLevelRoles(userId, user.getRealmRoles());
+    setClientLevelRoles(userId, user.getClientRoles());
     setGroups(userId, user.getGroups());
     sendVerifyEmail(userId);
 
@@ -277,17 +277,57 @@ public class KeycloakService implements IKeycloakService {
   }
 
   @Override
-  public void setRoles(String userId, List<RoleRepresentation> roles) {
+  public void setRealmLevelRoles(String userId, List<String> realmRoles) {
+    if (null == userId || null == realmRoles || realmRoles.size() == 0) {
+      return;
+    }
+    String realm = getTenant(request);
+    Keycloak keycloakInstance = getKeycloakInstance();
+    List<RoleRepresentation> roleRepresentations = new ArrayList<>();
+    for (String role : realmRoles) {
+      roleRepresentations.add(keycloakInstance.realm(realm).roles().get(role).toRepresentation());
+    }
+
+    RealmResource realmResource = keycloakInstance.realm(realm);
+    UserResource userResource = realmResource.users().get(userId);
+    // Assign realm-role role1 to user
+    userResource.roles().realmLevel().add(roleRepresentations);
+  }
+
+  @Override
+  public void setClientLevelRoles(String userId, Map<String, List<String>> clientRoles) {
+    if (null == userId || null == clientRoles || clientRoles.size() == 0) {
+      return;
+    }
     String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     UserResource userResource = realmResource.users().get(userId);
-    // Assign realm-role role1 to user
-    userResource.roles().realmLevel().add(roles);
+    // Assign client-role role1 to user
+
+    Map<String, List<RoleRepresentation>> map = new HashMap<>();
+
+    for (Map.Entry<String, List<String>> entry : clientRoles.entrySet()) {
+      String clientId = entry.getKey();
+      List<String> roles = entry.getValue();
+      if (null == clientId || null == roles || roles.size() == 0) {
+        continue;
+      }
+
+      List<RoleRepresentation> roleRepresentations = new ArrayList<>();
+      for (String role : roles) {
+        roleRepresentations.add(keycloakInstance.realm(realm).roles().get(role).toRepresentation());
+      }
+      userResource.roles().clientLevel(clientId).add(roleRepresentations);
+
+    }
   }
 
   @Override
   public void setGroups(String userId, List<String> groupIds) {
+    if (null == userId || null == groupIds) {
+      return;
+    }
     String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);

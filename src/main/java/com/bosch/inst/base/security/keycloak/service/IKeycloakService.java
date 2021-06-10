@@ -36,7 +36,9 @@ public interface IKeycloakService {
 
   void resetPasswordEmail(String username);
 
-  void setRoles(String userId, List<RoleRepresentation> roles);
+  void setRealmLevelRoles(String userId, List<String> realmRoles);
+
+  void setClientLevelRoles(String userId, Map<String, List<String>> clientRoles);
 
   void setGroups(String userId, List<String> groupIds);
 
