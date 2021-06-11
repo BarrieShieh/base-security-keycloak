@@ -6,7 +6,7 @@
 
   <groupId>com.bosch.inst</groupId>
   <artifactId>base-security-keycloak</artifactId>
-  <version>0.0.17-SNAPSHOT</version>
+  <version>0.0.18-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>base :: security keycloak</name>
@@ -15,11 +15,11 @@
   <parent>
     <groupId>com.bosch.inst</groupId>
     <artifactId>base</artifactId>
-    <version>0.4.59-SNAPSHOT</version>
+    <version>0.4.60-SNAPSHOT</version>
   </parent>
 
   <properties>
-    <base.version>0.4.59-SNAPSHOT</base.version>
+    <base.version>0.4.60-SNAPSHOT</base.version>
     <!--  Keycloak properties   -->
     <!-- https://mvnrepository.com/artifact/org.keycloak/keycloak-spring-boot-starter -->
     <keycloak.version>13.0.1</keycloak.version>
@@ -97,21 +97,4 @@
       <!--            </dependency>-->
     </dependencies>
   </dependencyManagement>
-  <build>
-    <plugins>
-      <!-- Source attach plugin -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
 </project>
