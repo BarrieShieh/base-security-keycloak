@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.18:
+
+* Update base to 0.4.60-SNAPSHOT
+
 == 0.0.17:
 
 * Add user attribute search API
