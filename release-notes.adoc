@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.0.17:
+
+* Add user attribute search API
+
 == 0.0.16:
 
 * Add source in the artifacts
