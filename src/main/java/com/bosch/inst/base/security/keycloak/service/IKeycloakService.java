@@ -48,6 +48,12 @@ public interface IKeycloakService {
 
   List<UserRepresentation> getUsers();
 
+  List<UserRepresentation> searchForUserByAttribute(String attributeName,
+      String attributeValue);
+
+  List<UserRepresentation> searchForUserByUsernameFirstLastNameEmail(String search,
+      Integer firstResult, Integer maxResults);
+
   GroupRepresentation getGroupById(String groupId);
 
   List<GroupRepresentation> getGroupsByUserId(String userId);

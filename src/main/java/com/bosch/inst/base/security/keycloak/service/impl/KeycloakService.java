@@ -4,6 +4,7 @@ import static graphql.Assert.assertTrue;
 import static org.springframework.test.util.AssertionErrors.assertEquals;
 
 import com.bosch.inst.base.security.keycloak.auth.Credentials;
+import com.bosch.inst.base.security.keycloak.entity.RequiredAction;
 import com.bosch.inst.base.security.keycloak.exception.FailedRequestKeycloakException;
 import com.bosch.inst.base.security.keycloak.exception.InvalidKeycloakResponseException;
 import com.bosch.inst.base.security.keycloak.exception.InvalidTenantException;
@@ -228,7 +229,6 @@ public class KeycloakService implements IKeycloakService {
   @Override
   public UserRepresentation selfRegistration(UserRepresentation user) {
     String realm = getTenant(request);
-
     Keycloak keycloakInstance = getKeycloakInstance();
     user.setEnabled(true);
 
@@ -245,11 +245,12 @@ public class KeycloakService implements IKeycloakService {
     }
 
     String userId = response.getLocation().getPath().replaceAll(".*/([^/]+)$", "$1");
-
     setRealmLevelRoles(userId, user.getRealmRoles());
     setClientLevelRoles(userId, user.getClientRoles());
     setGroups(userId, user.getGroups());
-    sendVerifyEmail(userId);
+    if (user.getRequiredActions().contains(RequiredAction.VERIFY_EMAIL.toString())) {
+      sendVerifyEmail(userId);
+    }
 
     return keycloakInstance.realm(realm).users().get(userId).toRepresentation();
   }
@@ -305,21 +306,25 @@ public class KeycloakService implements IKeycloakService {
     UserResource userResource = realmResource.users().get(userId);
     // Assign client-role role1 to user
 
-    Map<String, List<RoleRepresentation>> map = new HashMap<>();
-
     for (Map.Entry<String, List<String>> entry : clientRoles.entrySet()) {
       String clientId = entry.getKey();
+      List<ClientRepresentation> clients = keycloakInstance.realm(realm).clients()
+          .findByClientId(entry.getKey());
+      if (clients.size() != 1) {
+        throw new InvalidKeycloakResponseException("Client ID '" + clientId + "' not found");
+      }
+      String clientUUID = clients.stream().findFirst().get().getId();
       List<String> roles = entry.getValue();
       if (null == clientId || null == roles || roles.size() == 0) {
         continue;
       }
 
-      List<RoleRepresentation> roleRepresentations = new ArrayList<>();
-      for (String role : roles) {
-        roleRepresentations.add(keycloakInstance.realm(realm).roles().get(role).toRepresentation());
-      }
-      userResource.roles().clientLevel(clientId).add(roleRepresentations);
-
+      userResource.roles().clientLevel(clientUUID).add(
+          roles.stream().map(
+              r -> keycloakInstance.realm(realm).clients().get(clientUUID).roles().get(r)
+                  .toRepresentation())
+              .collect(
+                  Collectors.toList()));
     }
   }
 
@@ -360,6 +365,26 @@ public class KeycloakService implements IKeycloakService {
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
     return realmResource.users().list();
+  }
+
+  @Override
+  public List<UserRepresentation> searchForUserByAttribute(String attributeName,
+      String attributeValue) {
+    String realm = getTenant(request);
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmResource realmResource = keycloakInstance.realm(realm);
+    return realmResource.users().list().stream()
+        .filter(r -> r.getAttributes().get(attributeName).contains(attributeValue)).collect(
+            Collectors.toList());
+  }
+
+  @Override
+  public List<UserRepresentation> searchForUserByUsernameFirstLastNameEmail(String search,
+      Integer firstResult, Integer maxResults) {
+    String realm = getTenant(request);
+    Keycloak keycloakInstance = getKeycloakInstance();
+    RealmResource realmResource = keycloakInstance.realm(realm);
+    return realmResource.users().search(search, firstResult, maxResults);
   }
 
   @Override
