@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
     AuthorizationCookieHandler.class
 })
 public class LoginController {
-
   @Autowired
   private HttpServletRequest request;
 

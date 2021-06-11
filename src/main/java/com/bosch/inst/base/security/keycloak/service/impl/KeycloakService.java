@@ -45,6 +45,7 @@ import org.keycloak.representations.idm.RealmRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -66,6 +67,15 @@ public class KeycloakService implements IKeycloakService {
 
   @Autowired
   private HttpServletRequest request;
+
+  @Value("${keycloak.root.realm}")
+  private String keycloakRootRealm;
+
+  @Value("${keycloak.root.username}")
+  private String keycloakRootUsername;
+
+  @Value("${keycloak.root.password}")
+  private String keycloakRootPassword;
 
   @Override
   public Keycloak getKeycloakInstance() {
