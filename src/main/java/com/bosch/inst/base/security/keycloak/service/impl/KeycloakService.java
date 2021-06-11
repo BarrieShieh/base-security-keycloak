@@ -373,8 +373,11 @@ public class KeycloakService implements IKeycloakService {
     String realm = getTenant(request);
     Keycloak keycloakInstance = getKeycloakInstance();
     RealmResource realmResource = keycloakInstance.realm(realm);
+
     return realmResource.users().list().stream()
-        .filter(r -> r.getAttributes().get(attributeName).contains(attributeValue)).collect(
+        .filter(r -> null != r.getAttributes() && r.getAttributes().containsKey(attributeName) && r
+            .getAttributes().get(attributeName)
+            .contains(attributeValue)).collect(
             Collectors.toList());
   }
 
