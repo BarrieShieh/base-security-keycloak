@@ -1,5 +1,9 @@
 = Release Notes
 
+== 0.1.0:
+
+* Add User Adapter
+
 == 0.0.19:
 
 * Update

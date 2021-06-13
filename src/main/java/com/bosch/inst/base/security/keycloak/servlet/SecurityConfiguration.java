@@ -1,8 +1,9 @@
 package com.bosch.inst.base.security.keycloak.servlet;
 
-import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.ROOT_TENANT_NAME;
-import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_COOKIE_NAME;
+import static com.bosch.inst.base.security.keycloak.adapter.BaseAdapter.ROOT_REALM_NAME;
 
+import com.bosch.inst.base.security.keycloak.adapter.BaseAdapter;
+import com.bosch.inst.base.security.keycloak.adapter.UserAdapter;
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
 import com.bosch.inst.base.security.keycloak.filter.CorsFilter;
@@ -10,11 +11,10 @@ import com.bosch.inst.base.security.keycloak.filter.CustomLogoutHandler;
 import com.bosch.inst.base.security.keycloak.filter.EnforceSecureLoginFilter;
 import com.bosch.inst.base.security.keycloak.filter.RefreshLoginCookieFilter;
 import com.bosch.inst.base.security.keycloak.filter.XRequestedHeaderFilter;
-import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
 import lombok.SneakyThrows;
 import org.keycloak.adapters.KeycloakConfigResolver;
 import org.keycloak.adapters.KeycloakDeployment;
-import org.keycloak.adapters.spi.HttpFacade;
+import org.keycloak.adapters.OIDCHttpFacade;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,8 +44,7 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 })
 @Import({
     RefreshLoginCookieFilter.class,
-    AuthorizationCookieHandler.class,
-    KeycloakService.class
+    AuthorizationCookieHandler.class
 })
 public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter {
 
@@ -54,9 +53,6 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
 
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
-
-  @Autowired
-  private KeycloakService keycloakService;
 
   @Override
   public void configure(WebSecurity web) throws Exception {
@@ -92,7 +88,7 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
     http.logout()
         .addLogoutHandler(new CustomLogoutHandler(authorizationCookieHandler))
         .deleteCookies(httpProperties.getCookie().getName())
-        .deleteCookies(TENANT_COOKIE_NAME)
+        .deleteCookies(BaseAdapter.REALM_COOKIE_NAME)
         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler(HttpStatus.OK));
 
     // Return the 'WWW-Authenticate: Basic' header in case of missing credentials
@@ -139,11 +135,10 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
     return new KeycloakConfigResolver() {
       @SneakyThrows
       @Override
-      public KeycloakDeployment resolve(HttpFacade.Request facade) {
+      public KeycloakDeployment resolve(OIDCHttpFacade.Request request) {
 //        String uri = facade.getRelativePath();
-
-        String tenant = keycloakService.getTenant(facade);
-        return keycloakService.getRealmInfo(null != tenant ? tenant : ROOT_TENANT_NAME);
+        String realm = BaseAdapter.getRealm(request);
+        return new UserAdapter(null != realm ? realm : ROOT_REALM_NAME).getRealmInfo();
 
 //        if ("/login".equals(uri)) {
 ////          return new KeycloakSpringBootConfigResolver().resolve(facade);

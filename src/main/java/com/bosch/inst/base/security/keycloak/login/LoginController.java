@@ -1,11 +1,11 @@
 package com.bosch.inst.base.security.keycloak.login;
 
-import static com.bosch.inst.base.security.keycloak.service.impl.KeycloakService.TENANT_HEADER_NAME;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
+import com.bosch.inst.base.security.keycloak.adapter.BaseAdapter;
+import com.bosch.inst.base.security.keycloak.adapter.UserAdapter;
 import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.bosch.inst.base.security.keycloak.cookie.AuthorizationCookieHandler;
-import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Tag(description = "Manage authentication", name = "Login")
 @Import({
-    KeycloakService.class,
     AuthorizationCookieHandler.class
 })
 public class LoginController {
@@ -44,8 +43,6 @@ public class LoginController {
   @Autowired
   private HttpServletResponse response;
 
-  @Autowired
-  private KeycloakService keycloakService;
 
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
@@ -68,17 +65,18 @@ public class LoginController {
   @RequestMapping(value = LOGIN_PATH, method = POST)
   @Operation(description = "Login the system, and put credentials into cookies")
   public ResponseEntity login(
-      @Parameter(description = "Tenant")
-      @RequestHeader(value = TENANT_HEADER_NAME) String tenant,
+      @Parameter(description = "Realm")
+      @RequestHeader(value = BaseAdapter.REALM_HEADER_NAME) String realm,
       @Valid
       @Parameter(description = "User provided credentials")
       @RequestBody Credentials credentials) {
-    AccessTokenResponse tokenResponse = keycloakService.getAccessToken(credentials);
+    UserAdapter userAdapter = new UserAdapter(realm);
+    AccessTokenResponse tokenResponse = userAdapter.getAccessToken(credentials);
 
-    loginAdapter.before(tenant, credentials, tokenResponse);
+    loginAdapter.before(realm, credentials, tokenResponse);
     authorizationCookieHandler.setAuthenticationCookie(tokenResponse);
-    authorizationCookieHandler.setTenantCookie(tenant);
-    loginAdapter.after(tenant, credentials, tokenResponse);
+    authorizationCookieHandler.setRealmCookie(realm);
+    loginAdapter.after(realm, credentials, tokenResponse);
     return new ResponseEntity<>(tokenResponse, HttpStatus.OK);
 //    TenantUserPasswordToken token = new TenantUserPasswordToken(credentials.getUsername(),
 //        credentials.getPassword(), credentials.getTenant());

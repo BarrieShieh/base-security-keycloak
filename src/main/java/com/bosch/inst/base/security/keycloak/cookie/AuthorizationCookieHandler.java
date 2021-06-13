@@ -1,9 +1,9 @@
 package com.bosch.inst.base.security.keycloak.cookie;
 
 
+import com.bosch.inst.base.security.keycloak.adapter.BaseAdapter;
 import com.bosch.inst.base.security.keycloak.auth.CredentialsProperties;
 import com.bosch.inst.base.security.keycloak.auth.HttpProperties;
-import com.bosch.inst.base.security.keycloak.service.impl.KeycloakService;
 import java.util.Arrays;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -60,29 +60,29 @@ public class AuthorizationCookieHandler {
 
     String domain = getCookieDomain(request.getServerName());
     response.addCookie(
-        createLoginCookie(KeycloakService.ACCESS_TOKEN_COOKIE_NAME, accessToken, domain));
+        createLoginCookie(BaseAdapter.ACCESS_TOKEN_COOKIE_NAME, accessToken, domain));
     response.addCookie(
-        createLoginCookie(KeycloakService.REFRESH_TOKEN_COOKIE_NAME, refreshToken, domain));
+        createLoginCookie(BaseAdapter.REFRESH_TOKEN_COOKIE_NAME, refreshToken, domain));
 //    response.addHeader(credentialsProperties.getHeader(), accessToken);
   }
 
-  public void setTenantCookie(String tenant) {
+  public void setRealmCookie(String realm) {
     String domain = getCookieDomain(request.getServerName());
-    response.addCookie(this.createLoginCookie(KeycloakService.TENANT_COOKIE_NAME, tenant, domain));
+    response.addCookie(this.createLoginCookie(BaseAdapter.REALM_HEADER_NAME, realm, domain));
   }
 
   public void deleteAuthenticationCookie(HttpServletRequest httpServletRequest,
       HttpServletResponse response) {
     String domain = getCookieDomain(httpServletRequest.getServerName());
     response
-        .addCookie(deleteLoginCookie(KeycloakService.REFRESH_TOKEN_COOKIE_NAME, "value", domain));
+        .addCookie(deleteLoginCookie(BaseAdapter.REFRESH_TOKEN_COOKIE_NAME, "value", domain));
   }
 
-  public void deleteTenantCookie(HttpServletRequest httpServletRequest,
+  public void deleteRealmCookie(HttpServletRequest httpServletRequest,
       HttpServletResponse response) {
     String domain = getCookieDomain(httpServletRequest.getServerName());
     response
-        .addCookie(this.deleteLoginCookie(KeycloakService.TENANT_COOKIE_NAME, "tenant", domain));
+        .addCookie(this.deleteLoginCookie(BaseAdapter.REALM_HEADER_NAME, "tenant", domain));
   }
 
 
@@ -118,11 +118,11 @@ public class AuthorizationCookieHandler {
    * @return The authentication cookie or null if none is found in the given request
    */
   public Cookie getAuthorizationCookie(HttpServletRequest request) {
-    return this.getCookie(request, KeycloakService.REFRESH_TOKEN_COOKIE_NAME);
+    return this.getCookie(request, BaseAdapter.REFRESH_TOKEN_COOKIE_NAME);
   }
 
-  public Cookie getTenantCookie(HttpServletRequest request) {
-    return this.getCookie(request, KeycloakService.TENANT_COOKIE_NAME);
+  public Cookie getRealmCookie(HttpServletRequest request) {
+    return this.getCookie(request, BaseAdapter.REALM_COOKIE_NAME);
   }
 
   private Cookie getCookie(HttpServletRequest request, String cookieName) {
