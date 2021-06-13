@@ -68,14 +68,14 @@ public class KeycloakService implements IKeycloakService {
   @Autowired
   private HttpServletRequest request;
 
-  @Value("${keycloak.root.realm}")
-  private String keycloakRootRealm;
-
-  @Value("${keycloak.root.username}")
-  private String keycloakRootUsername;
-
-  @Value("${keycloak.root.password}")
-  private String keycloakRootPassword;
+//  @Value("${keycloak.root.realm}")
+//  private String keycloakRootRealm;
+//
+//  @Value("${keycloak.root.username}")
+//  private String keycloakRootUsername;
+//
+//  @Value("${keycloak.root.password}")
+//  private String keycloakRootPassword;
 
   @Override
   public Keycloak getKeycloakInstance() {

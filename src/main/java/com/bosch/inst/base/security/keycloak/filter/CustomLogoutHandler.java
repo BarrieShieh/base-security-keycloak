@@ -18,6 +18,6 @@ public class CustomLogoutHandler implements LogoutHandler {
   public void logout(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse,
       Authentication authentication) {
     authorizationCookieHandler.deleteAuthenticationCookie(httpServletRequest, httpServletResponse);
-    authorizationCookieHandler.deleteTenantCookie(httpServletRequest, httpServletResponse);
+    authorizationCookieHandler.deleteRealmCookie(httpServletRequest, httpServletResponse);
   }
 }
