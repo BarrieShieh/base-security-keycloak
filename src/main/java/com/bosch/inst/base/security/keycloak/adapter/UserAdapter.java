@@ -5,17 +5,21 @@ import com.bosch.inst.base.security.keycloak.exception.InvalidKeycloakResponseEx
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.Response;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.KeycloakPrincipal;
+import org.keycloak.adapters.KeycloakDeployment;
 import org.keycloak.adapters.springsecurity.token.KeycloakAuthenticationToken;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -58,6 +62,16 @@ public class UserAdapter extends BaseAdapter {
     return user;
   }
 
+  public List<String> getLoginUserRoles(HttpServletRequest request) {
+    KeycloakAuthenticationToken token = (KeycloakAuthenticationToken) request.getUserPrincipal();
+    KeycloakPrincipal principal = (KeycloakPrincipal) token.getPrincipal();
+    KeycloakDeployment deployment = getRealmInfo();
+    String clientId = deployment.getResourceName();
+    AccessToken.Access resourceAccess = principal.getKeycloakSecurityContext().getToken()
+        .getResourceAccess(clientId);
+    Set<String> set = resourceAccess == null ? new HashSet<>() : resourceAccess.getRoles();
+    return new ArrayList<>(set);
+  }
 
   public UserRepresentation selfRegistration(UserRepresentation user) {
     user.setEnabled(true);
