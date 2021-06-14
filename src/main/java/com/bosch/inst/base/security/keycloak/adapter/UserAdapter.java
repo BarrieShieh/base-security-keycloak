@@ -21,6 +21,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.representations.AccessToken;
 import org.keycloak.representations.idm.ClientRepresentation;
+import org.keycloak.representations.idm.GroupRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.http.HttpStatus;
@@ -42,13 +43,13 @@ public class UserAdapter extends BaseAdapter {
     KeycloakPrincipal principal = (KeycloakPrincipal) token.getPrincipal();
     String userId = principal.getName();
     UserRepresentation user = realmResource.users().get(userId).toRepresentation();
-    List<String> realmRoles = getRealmLevelRolesByUserId(userId).stream()
+    List<String> realmRoles = getRealmLevelRoles(userId).stream()
         .map(r -> r.getName()).collect(
             Collectors.toList());
     user.setRealmRoles(realmRoles);
 
     Map<String, List<RoleRepresentation>> roles = this
-        .getClientLevelRolesByUserId(userId);
+        .getClientLevelRoles(userId);
 
     Map<String, List<String>> clientsRoles = new HashMap<>();
     for (Map.Entry<String, List<RoleRepresentation>> entry : roles.entrySet()) {
@@ -94,7 +95,6 @@ public class UserAdapter extends BaseAdapter {
     return realmResource.users().get(userId).toRepresentation();
   }
 
-
   public void sendVerifyEmail(String userId) {
     UserResource userResource = realmResource.users().get(userId);
     userResource.sendVerifyEmail();
@@ -109,6 +109,10 @@ public class UserAdapter extends BaseAdapter {
     }
   }
 
+  public List<RoleRepresentation> getRealmLevelRoles(
+      String userId) {
+    return realmResource.users().get(userId).roles().realmLevel().listAll();
+  }
 
   public void setRealmLevelRoles(String userId,
       List<String> realmRoles) {
@@ -125,6 +129,20 @@ public class UserAdapter extends BaseAdapter {
     userResource.roles().realmLevel().add(roleRepresentations);
   }
 
+  public Map<String, List<RoleRepresentation>> getClientLevelRoles(
+      String userId) {
+    List<ClientRepresentation> clients = realmResource.clients().findAll();
+
+    Map<String, List<RoleRepresentation>> map = new HashMap<>();
+
+    for (ClientRepresentation client : clients) {
+      List<RoleRepresentation> roles = realmResource.users().get(userId).roles()
+          .clientLevel(client.getId()).listAll();
+      map.put(client.getClientId(), roles);
+    }
+
+    return map;
+  }
 
   public void setClientLevelRoles(String userId,
       Map<String, List<String>> clientRoles) {
@@ -156,26 +174,9 @@ public class UserAdapter extends BaseAdapter {
     }
   }
 
-  public List<RoleRepresentation> getRealmLevelRolesByUserId(
-      String userId) {
-    return realmResource.users().get(userId).roles().realmLevel().listAll();
+  public List<GroupRepresentation> getGroups(String userId) {
+    return realmResource.users().get(userId).groups();
   }
-
-  public Map<String, List<RoleRepresentation>> getClientLevelRolesByUserId(
-      String userId) {
-    List<ClientRepresentation> clients = realmResource.clients().findAll();
-
-    Map<String, List<RoleRepresentation>> map = new HashMap<>();
-
-    for (ClientRepresentation client : clients) {
-      List<RoleRepresentation> roles = realmResource.users().get(userId).roles()
-          .clientLevel(client.getId()).listAll();
-      map.put(client.getClientId(), roles);
-    }
-
-    return map;
-  }
-
 
   public void setGroups(String userId, List<String> groupIds) {
     if (null == userId || null == groupIds) {
@@ -187,8 +188,7 @@ public class UserAdapter extends BaseAdapter {
     }
   }
 
-
-  public List<UserRepresentation> searchForUserByAttribute(
+  public List<UserRepresentation> searchByAttribute(
       String attributeName,
       String attributeValue
   ) {
