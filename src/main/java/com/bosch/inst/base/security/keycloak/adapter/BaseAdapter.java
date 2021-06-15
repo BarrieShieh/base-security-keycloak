@@ -10,14 +10,27 @@ import com.bosch.inst.base.security.keycloak.exception.InvalidKeycloakResponseEx
 import com.bosch.inst.base.security.keycloak.exception.InvalidTenantException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHeaders;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.keycloak.KeycloakPrincipal;
 import org.keycloak.KeycloakSecurityContext;
@@ -130,46 +143,86 @@ public abstract class BaseAdapter {
     String authServerUrl = deployment.getAuthServerBaseUrl();
 
     // data for token request
-    MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-    params.add("grant_type", "password");
+    List<NameValuePair> params = new ArrayList<NameValuePair>();
+
+    params.add(new BasicNameValuePair("grant_type", "password"));
 //    params.add("client_id", deployment.getResourceName());
-    params.add("username", credentials.getUsername());
-    params.add("password", credentials.getPassword());
+    params.add(new BasicNameValuePair("username", credentials.getUsername()));
+    params.add(new BasicNameValuePair("password", credentials.getPassword()));
 
-    // construct token request (including authorization for client(
-    RequestEntity<MultiValueMap<String, String>> authRequest = null;
+    CloseableHttpClient httpClient = HttpClients.custom().useSystemProperties()
+        .build();
+
     try {
-      authRequest = RequestEntity
-          .post(new URI(authServerUrl +
-              "/realms/" + realm + "/protocol/openid-connect/token"))
-          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-          .accept(MediaType.APPLICATION_JSON)
-          .header("Authorization",
-              httpBasicAuthorization(deployment.getResourceName(),
-                  deployment.getResourceCredentials().get("secret").toString()))
-          .body(params);
-    } catch (URISyntaxException e) {
-      throw new FailedRequestKeycloakException("Request keycloak failed", e);
-    }
+      HttpPost httpPost = new HttpPost(
+          new URI(authServerUrl + "/realms/" + realm + "/protocol/openid-connect/token"));
 
-    // execute request and test for success
-    RestTemplate restTemplate = new RestTemplate();
-    ResponseEntity<String> response = restTemplate.exchange(authRequest, String.class);
-    assertEquals("", HttpStatus.OK, response.getStatusCode());
-    assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
+      httpPost.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+      httpPost.setHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE);
+      httpPost
+          .setHeader(HttpHeaders.AUTHORIZATION, httpBasicAuthorization(deployment.getResourceName(),
+              deployment.getResourceCredentials().get("secret").toString()));
 
-    // extract access token (JWT) from response
+      httpPost.setEntity(new UrlEncodedFormEntity(params, StandardCharsets.UTF_8));
+      HttpResponse response = httpClient.execute(httpPost);
 
-    ObjectMapper objectMapper = new ObjectMapper();
+      if (!HttpStatus.valueOf(response.getStatusLine().getStatusCode()).is2xxSuccessful()) {
+        throw new InvalidKeycloakResponseException(EntityUtils.toString(response.getEntity()));
+      }
+      String responseStr = EntityUtils.toString(response.getEntity());
 
-    AccessTokenResponse tokenResponse = null;
-    try {
-      tokenResponse = objectMapper.readValue(response.getBody(), AccessTokenResponse.class);
-    } catch (JsonProcessingException e) {
+      ObjectMapper objectMapper = new ObjectMapper();
+
+      AccessTokenResponse tokenResponse = objectMapper
+          .readValue(responseStr, AccessTokenResponse.class);
+      return tokenResponse;
+
+    } catch (Exception e) {
       throw new InvalidKeycloakResponseException("Invalid Keycloak response!", e);
+    } finally {
+      if (null != httpClient) {
+        try {
+          httpClient.close();
+        } catch (IOException e) {
+          throw new InvalidKeycloakResponseException("Invalid Keycloak response!", e);
+        }
+      }
     }
 
-    return tokenResponse;
+//    // construct token request (including authorization for client(
+//    RequestEntity<MultiValueMap<String, String>> authRequest = null;
+//    try {
+//      authRequest = RequestEntity
+//          .post(new URI(authServerUrl +
+//              "/realms/" + realm + "/protocol/openid-connect/token"))
+//          .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+//          .accept(MediaType.APPLICATION_JSON)
+//          .header("Authorization",
+//              httpBasicAuthorization(deployment.getResourceName(),
+//                  deployment.getResourceCredentials().get("secret").toString()))
+//          .body(params);
+//    } catch (URISyntaxException e) {
+//      throw new FailedRequestKeycloakException("Request keycloak failed", e);
+//    }
+//
+//    // execute request and test for success
+//    RestTemplate restTemplate = new RestTemplate();
+//    ResponseEntity<String> response = restTemplate.exchange(authRequest, String.class);
+//    assertEquals("", HttpStatus.OK, response.getStatusCode());
+//    assertTrue(response.getHeaders().getContentType().isCompatibleWith(MediaType.APPLICATION_JSON));
+
+//    // extract access token (JWT) from response
+
+//    ObjectMapper objectMapper = new ObjectMapper();
+//
+//    AccessTokenResponse tokenResponse = null;
+//    try {
+//      tokenResponse = objectMapper.readValue(responseStr, AccessTokenResponse.class);
+//    } catch (JsonProcessingException e) {
+//      throw new InvalidKeycloakResponseException("Invalid Keycloak response!", e);
+//    }
+//
+//    return tokenResponse;
   }
 
   public static String getRefreshAccessToken(HttpServletRequest request) {
