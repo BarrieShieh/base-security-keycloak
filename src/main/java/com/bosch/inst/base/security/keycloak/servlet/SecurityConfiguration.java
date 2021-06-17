@@ -18,6 +18,7 @@ import org.keycloak.adapters.OIDCHttpFacade;
 import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
 import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -53,6 +54,9 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
 
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
+
+  @Value("${identity-provider.config.path}")
+  private String configPath;
 
   @Override
   public void configure(WebSecurity web) throws Exception {
@@ -138,7 +142,7 @@ public class SecurityConfiguration extends KeycloakWebSecurityConfigurerAdapter 
       public KeycloakDeployment resolve(OIDCHttpFacade.Request request) {
 //        String uri = facade.getRelativePath();
         String realm = BaseAdapter.getRealm(request);
-        return new UserAdapter(null != realm ? realm : ROOT_REALM_NAME).getRealmInfo();
+        return new UserAdapter(null != realm ? realm : ROOT_REALM_NAME, configPath).getRealmInfo();
 
 //        if ("/login".equals(uri)) {
 ////          return new KeycloakSpringBootConfigResolver().resolve(facade);
