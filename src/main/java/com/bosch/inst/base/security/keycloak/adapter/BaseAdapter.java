@@ -5,6 +5,8 @@ import com.bosch.inst.base.security.keycloak.auth.Credentials;
 import com.bosch.inst.base.security.keycloak.exception.InvalidKeycloakResponseException;
 import com.bosch.inst.base.security.keycloak.exception.InvalidTenantException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -39,6 +41,7 @@ import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.util.ResourceUtils;
 
 @Slf4j
 @Getter
@@ -52,8 +55,16 @@ public abstract class BaseAdapter {
 
   protected String realm;
 
-  public BaseAdapter(String realm) {
+  private String configPath;
+
+  public BaseAdapter(String realm, String configPath) {
     this.realm = realm;
+
+    if (configPath.endsWith("/") || configPath.endsWith("\\")) {
+      this.configPath = configPath.substring(0, configPath.length() - 1);
+    } else {
+      this.configPath = configPath;
+    }
   }
 
   /*
@@ -314,14 +325,13 @@ public abstract class BaseAdapter {
       throw new InvalidTenantException("Realm is null!");
     }
     KeycloakDeployment keycloakDeployment;
+    String path = configPath + "/" + realm + ".json";
+    try {
+      InputStream configInputStream = new FileInputStream(ResourceUtils.getFile(path));
 
-    String path = "/keycloak/" + realm + ".json";
-    InputStream configInputStream = getClass().getResourceAsStream(path);
-
-    if (configInputStream == null) {
-      throw new InvalidTenantException("Could not load Keycloak deployment info: " + path);
-    } else {
       keycloakDeployment = KeycloakDeploymentBuilder.build(configInputStream);
+    } catch (FileNotFoundException e) {
+      throw new InvalidTenantException("Could not load Keycloak deployment info: " + path, e);
     }
 
     return keycloakDeployment;

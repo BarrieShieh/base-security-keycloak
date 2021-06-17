@@ -32,8 +32,8 @@ public class UserAdapter extends BaseAdapter {
 
   private RealmResource realmResource;
 
-  public UserAdapter(String realm) {
-    super(realm);
+  public UserAdapter(String realm, String configPath) {
+    super(realm, configPath);
     this.realmResource = super.getRealmResource();
   }
 

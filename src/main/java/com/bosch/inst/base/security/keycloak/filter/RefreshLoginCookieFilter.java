@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,8 @@ public class RefreshLoginCookieFilter extends OncePerRequestFilter {
   @Autowired
   private AuthorizationCookieHandler authorizationCookieHandler;
 
+  @Value("${identity-provider.config.path}")
+  private String configPath;
 
   private void refreshAuthorizationCookie() {
     String realm = BaseAdapter.getRealm(request);
@@ -50,7 +53,8 @@ public class RefreshLoginCookieFilter extends OncePerRequestFilter {
           "Processed request with response HTTP status {} - will add fresh authorization cookie",
           response.getStatus());
       authorizationCookieHandler
-          .setAuthenticationCookie(new UserAdapter(realm).refreshAccessToken(refreshToken));
+          .setAuthenticationCookie(
+              new UserAdapter(realm, configPath).refreshAccessToken(refreshToken));
     } else {
       log.debug(
           "Processed request with response HTTP status {} - will NOT add fresh authorization cookie "

@@ -16,6 +16,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.AccessTokenResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
     AuthorizationCookieHandler.class
 })
 public class LoginController {
+
   @Autowired
   private HttpServletRequest request;
 
@@ -49,6 +51,9 @@ public class LoginController {
 
   @Autowired
   private LoginAdapter loginAdapter;
+
+  @Value("${identity-provider.config.path}")
+  private String configPath;
 
   public static final String LOGIN_PATH = "/login";
 
@@ -70,7 +75,7 @@ public class LoginController {
       @Valid
       @Parameter(description = "User provided credentials")
       @RequestBody Credentials credentials) {
-    UserAdapter userAdapter = new UserAdapter(realm);
+    UserAdapter userAdapter = new UserAdapter(realm, configPath);
     AccessTokenResponse tokenResponse = userAdapter.getAccessToken(credentials);
 
     loginAdapter.before(realm, credentials, tokenResponse);
