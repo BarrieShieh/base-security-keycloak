@@ -4,9 +4,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.bosch.inst</groupId>
-  <artifactId>base-security-keycloak</artifactId>
-  <version>0.1.5-SNAPSHOT</version>
+  <groupId>com.github.base.security</groupId>
+  <artifactId>keycloak-adapter</artifactId>
+  <version>0.1.6-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>base :: security keycloak</name>

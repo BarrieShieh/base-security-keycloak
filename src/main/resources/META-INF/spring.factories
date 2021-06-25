@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.bosch.inst.base.security.keycloak.SecureServletConfiguration
+  com.github.base.security.keycloak.SecureServletConfiguration
